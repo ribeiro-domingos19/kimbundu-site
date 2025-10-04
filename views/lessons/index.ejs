@@ -1,0 +1,36 @@
+<% layout = "layout" %>
+<div class="container">
+    <h2>Aulas Disponíveis</h2>
+    <div class="lesson-list">
+        <% 
+            const today = new Date().toISOString().split('T')[0];
+            let currentModule = ''; 
+        %>
+        
+        <% lessons.forEach(lesson => { %>
+            <% if (lesson.module !== currentModule) { %>
+                <h3><%= lesson.module %></h3>
+                <% currentModule = lesson.module; %>
+            <% } %>
+
+            <% 
+                // 🚨 NOVO: Verifica o status da aula
+                const isReleased = !lesson.release_date || lesson.release_date <= today;
+            %>
+            
+            <div class="lesson-item" style="border: 2px solid orange; padding: 15px; margin-bottom: 10px; border-radius: 4px;">
+                <% if (isReleased) { %>
+                    <a href="/lessons/<%= lesson.id %>" style="font-weight: bold;"><%= lesson.title %></a>
+                    <span style="float: right; color: green; font-weight: bold;">(Disponível)</span>
+                <% } else { %>
+                    <span style="font-weight: bold; color: #777;"><%= lesson.title %></span>
+                    <span style="float: right; color: red;">
+                        (Bloqueada até <%= new Date(lesson.release_date).toLocaleDateString('pt-BR') %>)
+                    </span>
+                <% } %>
+                <p style="margin-top: 5px; font-size: 0.9em;"><%= lesson.description %></p>
+            </div>
+        <% }) %>
+    </div>
+</div>
+

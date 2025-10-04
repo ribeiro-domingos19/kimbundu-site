@@ -1,0 +1,41 @@
+<% layout = "layout" %>
+<div class="container" style="max-width: 400px; padding-top: 50px;">
+    <h2>Login de Alunos</h2>
+
+        <% if (error) { %>
+        <p style="color: red; padding: 10px; background: #fdd; border: 1px solid red; border-radius: 4px;">
+            <%= error %>
+            
+            <% // Se o erro for sobre a pendência, exibe o link do WhatsApp %>
+            <% if (error.includes('pendente de aprovação')) { %>
+                <br><br>
+                <a href="https://wa.me/244955585363?text=Ol%C3%A1%2C%20acabei%20de%20me%20cadastrar%20no%20curso%20e%20gostaria%20de%20solicitar%20o%20acesso%20%C3%A0s%20aulas." target="_blank" style="display: block; text-align: center; margin-top: 10px; background-color: #25d366; color: white; padding: 10px; border-radius: 4px; text-decoration: none;">
+                    Peça o seu acesso pelo WhatsApp
+                </a>
+            <% } %>
+        </p>
+    <% } %>
+
+
+    <% if (success === 'true') { %>
+        <p style="color: green; padding: 10px; background: #ddf; border: 1px solid green; border-radius: 4px;">
+            Cadastro realizado com sucesso! Faça login para começar.
+        </p>
+    <% } %>
+
+    <form action="/auth/login" method="POST">
+        
+        <label for="username">Usuário:</label>
+        <input type="text" id="username" name="username" required><br>
+
+        <label for="password">Senha:</label>
+        <input type="password" id="password" name="password" required><br>
+
+        <button type="submit">Entrar</button>
+    </form>
+
+    <p style="text-align: center; margin-top: 20px;">
+        Não tem conta? <a href="/auth/register">Cadastre-se</a>
+    </p>
+</div>
+

@@ -1,0 +1,70 @@
+<% layout = "layout" %>
+<div class="container" style="padding-top: 20px;">
+
+  <p><a href="/lessons">← Voltar para todas as aulas</a></p>
+
+  <% if (messages && messages.length > 0) { %>
+    <div style="background:#f0f8ff; padding:10px; border:1px solid #cce; border-radius:6px; margin: 10px 0;">
+      <% messages.forEach(msg => { %>
+        <p style="margin:0;"><%= msg.text %></p>
+      <% }) %>
+    </div>
+  <% } %>
+
+  <% if (successMessage) { %>
+    <div style="padding: 10px; margin-bottom: 10px; border: 1px solid #4CAF50; background-color: #e8f5e9; color: #388E3C; border-radius: 4px;">
+        <%= successMessage %>
+    </div>
+  <% } %>
+  <% if (errorMessage) { %>
+    <div style="padding: 10px; margin-bottom: 10px; border: 1px solid #F44336; background-color: #ffebee; color: #D32F2F; border-radius: 4px;">
+        <%= errorMessage %>
+    </div>
+  <% } %>
+
+  <h2 style="border-bottom: 1px solid #ccc; padding-bottom: 10px;">
+    <%= lesson.title %>
+  </h2>
+
+  <div style="background:#fff; padding:20px; border:1px solid #ddd; border-radius:8px; margin-top:20px;">
+    <%- content %>
+  </div>
+
+  <% if (typeof quizResult !== 'undefined' && quizResult) { %>
+    <div style="padding: 15px; margin-bottom: 20px; border: 1px solid #4CAF50; background-color: #e8f5e9; color: #388E3C; border-radius: 4px;">
+        <strong>Resultado do Quiz:</strong> <%= quizResult.message %>
+        (Pontuação: <%= quizResult.score %>/<%= quizResult.total %>)
+    </div>
+  <% } %>
+
+  <div style="background:#f9f9f9; padding:20px; border:1px solid #eee; border-radius:8px; margin-top:25px;">
+  <h3>Dúvidas e Feedback</h3>
+
+<% if (comments && comments.length > 0) { %>
+    <% comments.forEach(comment => { %>
+        <div class="comment-item">
+            <p><strong><%= comment.username %>:</strong> <%= comment.message %></p>
+
+            <% if (comment.adminResponse) { %>
+                <div class="admin-reply">
+                    <p><strong>Resposta da Administração:</strong> <%= comment.adminResponse %></p>
+                </div>
+            <% } %>
+        </div>
+        <hr>
+    <% }) %>
+<% } else { %>
+    <p>Nenhum feedback ainda. Envie sua dúvida ou comentário abaixo.</p>
+<% } %>
+
+<form action="/lessons/<%= lesson.id %>/feedback" method="POST">
+    <textarea name="message" placeholder="Deixe sua dúvida/feedback aqui..." required></textarea>
+    <button type="submit">Enviar Feedback</button>
+</form>
+  </div>
+
+  <a href="/lessons/<%= lesson.id %>/quiz"
+       style="display:inline-block; margin-top:20px; padding:10px 15px; background:#2196F3; color:#fff; border-radius:4px; text-decoration:none;">
+       Fazer Quiz
+  </a>
+</div>

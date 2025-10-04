@@ -1,0 +1,13 @@
+<% layout = "layout" %>
+<div class="container" style="padding-top: 20px;">
+    
+    <a href="/admin/feedback" style="display: block; margin-bottom: 20px;">← Voltar para o Feedback</a>
+    <a href="/admin" style="display: block; margin-bottom: 20px;">← Voltar ao Painel Principal</a>
+
+    <h2 style="border-bottom: 1px solid #ccc; padding-bottom: 10px;">Visualização Admin: <%= lesson.title %></h2>
+    <p style="font-style: italic; color: #777;">Você está visualizando o conteúdo no modo Administrador. Esta página não possui comentários ou navegação do aluno.</p>
+    
+    <div style="background: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin-top: 20px;">
+        <%- content %> 
+    </div>
+</div>

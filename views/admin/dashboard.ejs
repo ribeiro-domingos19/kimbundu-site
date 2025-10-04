@@ -1,0 +1,85 @@
+<% layout = "layout" %>
+<div class="container">
+     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
+        <h2>Painel Administrativo</h2>
+        <p>Logado como: <b><%= user.username %></b> (<a href="/auth/logout">Sair</a>)</p>
+    </div>
+
+    <div style="margin-bottom: 30px; padding: 15px; background: #e0f7fa; border: 1px solid #b2ebf2; border-radius: 4px;">
+        ✅ **Gerenciar Usuários e Aprovações:** <a href="/admin/users" style="font-weight: bold; color: #00838f;">Ver Lista Completa de Usuários</a>
+    </div>
+
+    <div style="margin-bottom: 30px; padding: 15px; 
+background: #fff3e0; border: 1px solid #ffcc80; border-radius: 4px;">
+        💬 **Gerenciar Feedback e Comentários:** <a href="/admin/feedback" style="font-weight: bold; color: #ef6c00;">Responder Comentários Pendentes</a>
+    </div>
+    <div style="margin-bottom: 30px; padding: 15px; background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 4px;">
+  📢 <b>Mensagens Globais:</b>
+  <a href="/admin/messages" style="font-weight: bold;
+color: #2e7d32;">Enviar/Ver Mensagens</a>
+</div>
+    
+    <div style="margin-bottom: 30px; padding: 15px; background: #ffebee; border: 1px solid #ffcdd2; border-radius: 4px;">
+        📊 **Resultados do Quiz:** <a href="/admin/quiz-submissions" style="font-weight: bold; color: #c62828;">Ver Submissões dos Alunos</a>
+    </div>
+    <div style="background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+margin-bottom: 30px;">
+        <h3>Adicionar Nova Aula</h3>
+        <form action="/admin/lessons" method="POST" enctype="multipart/form-data">
+            <label for="title">Título:</label>
+            <input type="text" id="title" name="title" required>
+
+            <label for="description">Descrição:</label>
+            <textarea id="description" name="description" rows="3"></textarea>
+	    <label for="module">Módulo:</label>
+	    <select id="module" name="module" required>
+ 		 <option value="Módulo 1">Módulo 1</option>
+ 		 <option value="Módulo 
+ 2">Módulo 2</option>
+ 		 <option value="Módulo 3">Módulo 3</option>
+	    </select>
+            <label for="content_file">Arquivo da Aula (.txt):</label>
+            <input type="file" id="content_file" name="content_file" accept=".txt" required><br>
+
+            <label for="release_date">Data de Liberação:</label>
+            <input type="date" id="release_date" name="release_date"><br>
+
+            <button type="submit">Salvar Nova Aula</button>
+        </form>
+    
+        <small style="display: block; margin-top: 10px; color: #777;">
+            O arquivo TXT será enviado automaticamente para a pasta <code>content/</code>.
+        </small>
+    </div>
+
+    <h3>Aulas Existentes</h3>
+    <% if (lessons.length > 0) { %>
+        <table style="width: 100%;
+border-collapse: collapse; margin-top: 15px; background: #fff;">
+            <thead>
+                <tr style="background-color: #ecf0f1;">
+                    <th style="padding: 10px;
+text-align: left;">Título</th>
+                    <th style="padding: 10px;
+text-align: left;">Módulo</th>
+                    <th style="padding: 10px;
+text-align: left;">Arquivo TXT</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% lessons.forEach(lesson => { %>
+                    <tr style="border-bottom: 1px solid #eee;">
+              
+           <td style="padding: 10px;"><%= lesson.title %></td>
+                        <td style="padding: 10px;"><%= lesson.module %></td>
+                        <td style="padding: 10px;"><code><%= lesson.content_file %>.txt</code></td>
+                    </tr>
+          
+       <% }) %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <p>Nenhuma aula cadastrada ainda.</p>
+    <% } %>
+</div>
+

@@ -1,0 +1,14 @@
+{
+  "title": "Quiz de Lógica Básica",
+  "questions": {
+    "q1": { 
+      "text": "Qual é o resultado de 2 + 2?",
+      "options": ["3", "4", "5"]
+    },
+    "q2": {
+      "text": "Qual linguagem é usada para estilizar páginas web?",
+      "options": ["Python", "CSS", "C"]
+    }
+  }
+}
+

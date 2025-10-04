@@ -1,0 +1,50 @@
+<% layout = "layout" %>
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
+        <h2>Gerenciamento de Usuários</h2>
+        <p>Logado como: <b><%= user.username %></b> (<a href="/auth/logout">Sair</a>)</p>
+    </div>
+
+    <p><a href="/admin">← Voltar ao Painel de Aulas</a></p>
+
+    <% if (users && users.length > 0) { %>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff;">
+            <thead>
+                <tr style="background-color: #ecf0f1;">
+                    <th style="padding: 10px; text-align: left;">ID</th>
+                    <th style="padding: 10px; text-align: left;">Usuário</th>
+                    <th style="padding: 10px; text-align: left;">Cargo</th>
+                    <th style="padding: 10px; text-align: left;">Status</th>
+                    <th style="padding: 10px; text-align: center;">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% users.forEach(user => { %>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 10px;"><%= user.id %></td>
+                        <td style="padding: 10px;"><%= user.username %></td>
+                        <td style="padding: 10px;"><%= user.role %></td>
+                        <td style="padding: 10px; color: <%= user.approved ? 'green' : 'red' %>;">
+                            <%= user.approved ? 'Aprovado' : 'PENDENTE' %>
+                        </td>
+                        <td style="padding: 10px; text-align: center;">
+                            <% if (!user.approved) { %>
+                                <form action="/admin/users/<%= user.id %>/approve" method="POST">
+                                    <button type="submit" 
+                                            style="background-color: #4CAF50; color: white; border: none; 
+                                                   padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                        APROVAR
+                                    </button>
+                                </form>
+                            <% } else { %>
+                                -
+                            <% } %>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <p>Nenhum usuário cadastrado.</p>
+    <% } %>
+</div>

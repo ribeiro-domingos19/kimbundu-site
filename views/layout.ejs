@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> |Milongi Ya Kimbundu</title> 
+    <link rel="stylesheet" href="/styles/main.css">
+    </head>
+    <body>
+
+    <nav style="background-color: #3f51b5; padding: 10px 0; margin-bottom: 20px;">
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+
+            <a href="/" style="color: white; text-decoration: none; font-size: 1.2em; font-weight: bold;">
+                Kimbundu Milongi
+            </a>
+	                <ul style="list-style: none; padding: 0; margin: 0; display: flex;">
+
+                <% if (typeof user !== 'undefined' && user) { %>
+
+                    <% if (user.role === 'admin') { %>
+                        <li style="margin-left: 20px;">
+                            <a href="/admin" style="color: yellow; text-decoration: none; font-weight: bold;">Painel Admin</a>
+                        </li>
+                    <% } %>
+
+                    <% if (user.role !== 'admin') { %>
+                        <li style="margin-left: 20px;">
+                            <a href="/lessons" style="color: white; text-decoration: none;">Aulas</a>
+                        </li>
+                    <% } %>
+
+                    <li style="margin-left: 20px;">
+                        <a href="/auth/logout" style="color: #ff9800; text-decoration: none;">Sair</a>
+                    </li>
+
+                <% } else { %>
+                    <li style="margin-left: 20px;">
+                        <a href="/auth/login" style="color: white; text-decoration: none;">Login</a>
+                    </li>
+                    <li style="margin-left: 20px;">
+                        <a href="/auth/register" style="color: white; text-decoration: none;">Cadastrar</a>
+                    </li>
+                <% } %>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <%- body %>
+    </div>
+
+    </body>
+</html>
+
+

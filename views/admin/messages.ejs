@@ -1,0 +1,51 @@
+<% layout = "layout" %>
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
+    <div class="container">
+    <h1>Mensagens Globais</h1>
+    <p><a href="/admin">← Voltar ao Painel Principal</a></p>
+    </div>
+        <p>Logado como: <b><%= user.username %></b> (<a href="/auth/logout">Sair</a>)</p>
+    </div>
+
+    <p><a href="/admin">← Voltar ao Painel Principal</a></p>
+
+    <!-- Formulário para enviar nova mensagem -->
+    <form action="/admin/messages" method="POST" style="margin-bottom: 20px;">
+        <label for="text">Nova Mensagem:</label><br>
+        <textarea id="text" name="text" rows="3" style="width:100%; margin-bottom:10px;" required></textarea>
+        <button type="submit" style="background:#4CAF50; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">
+            Enviar Mensagem
+        </button>
+    </form>
+
+    <!-- Lista de mensagens já enviadas -->
+    <% if (messages && messages.length > 0) { %>
+        <table style="width:100%; border-collapse: collapse; background:#fff; margin-top:10px;">
+            <thead>
+                <tr style="background:#ecf0f1;">
+                    <th style="padding:10px; text-align:left;">Mensagem</th>
+                    <th style="padding:10px; text-align:left;">Data</th>
+                    <th style="padding:10px; text-align:center;">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% messages.forEach(msg => { %>
+                    <tr style="border-bottom:1px solid #eee;">
+                        <td style="padding:10px;"><%= msg.text %></td>
+                        <td style="padding:10px;"><%= new Date(msg.createdAt).toLocaleString() %></td>
+                        <td style="padding:10px; text-align:center;">
+                            <form action="/admin/messages/<%= msg.id %>/delete" method="POST" style="display:inline;">
+                                <button type="submit" style="background:#e74c3c; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
+                                    Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <p style="margin-top:15px; color:#777;">Nenhuma mensagem enviada ainda.</p>
+    <% } %>
+</div>

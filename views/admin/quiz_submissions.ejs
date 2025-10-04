@@ -1,0 +1,31 @@
+<% layout = "layout" %>
+<div class="container">
+    <h2 style="border-bottom: 1px solid #ddd; padding-bottom: 10px;">Submissões de Quiz</h2>
+    <p><a href="/admin">← Voltar para o Painel Administrativo</a></p>
+
+    <% if (logs && logs.length > 0) { %>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff;">
+            <thead>
+                <tr style="background-color: #f5f5f5;">
+                    <th style="padding: 10px; text-align: left;">Usuário</th>
+                    <th style="padding: 10px; text-align: left;">Aula</th>
+                    <th style="padding: 10px; text-align: left;">Pontuação</th>
+                    <th style="padding: 10px; text-align: left;">Data/Hora</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% logs.forEach(log => { %>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 10px;"><%= log.username %></td>
+                        <td style="padding: 10px;"><%= log.lessonTitle %> (ID: <%= log.lessonId %>)</td>
+                        <td style="padding: 10px;"><b><%= log.score %> / <%= log.total %></b></td>
+                        <td style="padding: 10px;"><%= new Date(log.timestamp).toLocaleString() %></td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <p>Nenhuma submissão de quiz registrada ainda.</p>
+    <% } %>
+</div>
+
