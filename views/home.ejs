@@ -4,8 +4,22 @@
         <h1 style="margin-bottom: 20px">Bem-vindo ao Curso de Kimbundu!</h1>
     </div>
     <div style="text-align: center; padding: 40px 0; border: 3px solid #ddd; border-radius: 8px">
-        <p style="margin-bottom: 20px;">Este é o seu portal para aprender Kimbundu.<br>Aqui você encontrará aulas preparadas especialmente para si que não tem nocão da língua <strong>Kimbundu</strong>.</p>
-        <a href="/auth/login" class="button">Clique aqui para Entrar</a>
+        
+        <% 
+            // 🚨 NOVO: Verifica se o usuário está logado.
+            if (typeof user !== 'undefined' && user) { 
+        %>
+            <p style="margin-bottom: 20px; font-size: 1.1em;">
+                Bem-vindo(a) de volta, <strong><%= user.username %></strong>!
+            </p>
+            <a href="/lessons" class="button" style="background-color: #fff; border: 2px solid #4CAF50; padding: 5px; border-radius: 4px">Ir para as Aulas</a>
+            
+        <% } else { %>
+
+            <p style="margin-bottom: 20px;">Este é o seu portal para aprender Kimbundu.<br>Aqui você encontrará aulas preparadas especialmente para si que não tem nocão da língua <strong>Kimbundu</strong>.</p>
+            <a href="/auth/login" class="button">Clique aqui para Entrar</a>
+            
+        <% } %>
     </div>
     </div>
 

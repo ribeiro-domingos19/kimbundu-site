@@ -1,16 +1,26 @@
 <% layout = "layout" %>
 <div class="container" style="max-width: 400px; padding-top: 50px;">
+    
+    <% 
+        // 🚨 NOVO: Se o usuário já estiver logado (user está preenchido), redireciona.
+        if (typeof user !== 'undefined' && user) {
+            res.redirect('/lessons');
+            return; // Impede a renderização do formulário
+        }
+    %>
+
     <h2>Login de Alunos</h2>
 
         <% if (error) { %>
         <p style="color: red; padding: 10px; background: #fdd; border: 1px solid red; border-radius: 4px;">
             <%= error %>
             
-            <% // Se o erro for sobre a pendência, exibe o link do WhatsApp %>
-            <% if (error.includes('pendente de aprovação')) { %>
+            [span_0](start_span)<% // Se o erro for sobre a pendência, exibe o link do WhatsApp[span_0](end_span) %>
+            [span_1](start_span)<% if (error.includes('pendente de aprovação')) { %>[span_1](end_span)
                 <br><br>
-                <a href="https://wa.me/244955585363?text=Ol%C3%A1%2C%20acabei%20de%20me%20cadastrar%20no%20curso%20e%20gostaria%20de%20solicitar%20o%20acesso%20%C3%A0s%20aulas." target="_blank" style="display: block; text-align: center; margin-top: 10px; background-color: #25d366; color: white; padding: 10px; border-radius: 4px; text-decoration: none;">
-                    Peça o seu acesso pelo WhatsApp
+                [span_2](start_span)<a href="https://wa.me/244955585363?text=Ol%C3%A1%2C%20acabei%20de%20me%20cadastrar%20no%20curso%20e%20gostaria%20de%20solicitar%20o%20acesso%20%C3%A0s%20aulas."[span_2](end_span)
+                [span_3](start_span)target="_blank" style="display: block; text-align: center; margin-top: 10px; background-color: #25d366; color: white; padding: 10px; border-radius: 4px; text-decoration: none;">[span_3](end_span)
+                    [span_4](start_span)Peça o seu acesso pelo WhatsApp[span_4](end_span)
                 </a>
             <% } %>
         </p>
@@ -18,8 +28,9 @@
 
 
     <% if (success === 'true') { %>
-        <p style="color: green; padding: 10px; background: #ddf; border: 1px solid green; border-radius: 4px;">
-            Cadastro realizado com sucesso! Faça login para começar.
+        [span_5](start_span)<p style="color: green; padding: 10px; background: #ddf; border: 1px solid green; border-radius: 4px;">[span_5](end_span)
+            [span_6](start_span)Cadastro realizado com sucesso[span_6](end_span)!
+            [span_7](start_span)Faça login para começar.[span_7](end_span)
         </p>
     <% } %>
 
@@ -35,7 +46,9 @@
     </form>
 
     <p style="text-align: center; margin-top: 20px;">
-        Não tem conta? <a href="/auth/register">Cadastre-se</a>
+        Não tem conta?
+        [span_8](start_span)<a href="/auth/register">Cadastre-se</a>[span_8](end_span)
     </p>
+</div>
 </div>
 

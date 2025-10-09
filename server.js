@@ -4,12 +4,12 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const expressLayouts = require('express-ejs-layouts');
 const session = require('express-session');
+const jwt = require('jsonwebtoken'); // 🚨 NOVO: Importa JWT
 
 const app = express();
 const PORT = process.env.PORT || 3000;            
 
 // Importa rotas E middlewares usando DESESTRUTURAÇÃO para CLAREZA:
-// De './routes/auth' precisamos de: requireAuth, requireAdmin e o router
 const { 
     router: authRouter, 
     requireAuth, 
@@ -18,8 +18,8 @@ const {
 
 // Desestrutura todos os routers para uso consistente:
 const { router: adminRouter } = require('./routes/admin');
-const { router: lessonRouter } = require('./routes/lessons'); // 🚨 CORRIGIDO o estilo de importação
-const { router: commentRouter } = require('./routes/comments'); // 🚨 CORRIGIDO o estilo de importação
+const { router: lessonRouter } = require('./routes/lessons'); 
+const { router: commentRouter } = require('./routes/comments'); 
                                                                                                    
 // Configuração EJS e Layouts
 app.set('view engine', 'ejs');
@@ -30,7 +30,7 @@ app.use(expressLayouts);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Configuração da Sessão
+// Configuração da Sessão (Pode ser mantida, mas não será usada para autenticação)
 app.use(session({
     // IMPORTANTE: Use uma string secreta longa e forte!
     secret: 'SEGREDO_SUPER_SEGURO_PARA_O_KIMBUNDU_SITE', 
@@ -48,10 +48,29 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/media', express.static(path.join(__dirname, 'media')));
 
 
-// 🚨 NOVO MIDDLEWARE: Define um title padrão (previne erros futuros)
+// 🚨 MIDDLEWARE GLOBAL: Decodifica o JWT e popula 'res.locals.user' para todas as views.
+const JWT_SECRET = "super_secreto_json_key"; 
+
 app.use((req, res, next) => {
-    // Se uma rota não definir um 'title', este será o fallback
-    res.locals.title = 'Kimbundu Milongi'; 
+    const token = req.cookies.jwt;
+    
+    // 1. Define um title padrão (mantido do seu upload)
+    res.locals.title = 'Kimbundu Milongi';
+    
+    // 2. Garante que 'user' está disponível em todas as views (seja null ou o objeto)
+    res.locals.user = null; 
+    
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, JWT_SECRET);
+            // Expõe o usuário (id, username, role) para todas as views:
+            res.locals.user = decoded; 
+        } catch (err) {
+            // Se o token for inválido/expirado, limpa o cookie.
+            res.clearCookie('jwt');
+        }
+    }
+    
     next();
 });
 
@@ -71,7 +90,6 @@ app.use('/comments', commentRouter);
 
 // Rota Inicial
 app.get('/', (req, res) => {
-    // title é opcional aqui por causa do middleware, mas mantido por boas práticas
     res.render('home', { title: 'Página Inicial' });
 });
 
