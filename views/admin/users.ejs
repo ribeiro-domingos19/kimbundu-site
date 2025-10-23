@@ -7,44 +7,92 @@
 
     <p><a href="/admin">← Voltar ao Painel de Aulas</a></p>
 
-    <% if (users && users.length > 0) { %>
+    <% if (successMessage) { %>
+        <div style="padding: 10px; margin-bottom: 15px; border: 1px solid #4CAF50; background-color: #e8f5e9; color: #388E3C; border-radius: 4px;">
+            <%= successMessage %>
+        </div>
+    <% } %>
+
+    <h3 style="border-bottom: 2px solid #ff9800; padding-bottom: 5px; margin-top: 30px; color: #ff9800;">
+        Usuários Pendentes de Aprovação (<%= pendingUsers.length %>)
+    </h3>
+
+    <% if (pendingUsers && pendingUsers.length > 0) { %>
         <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff;">
             <thead>
-                <tr style="background-color: #ecf0f1;">
-                    <th style="padding: 10px; text-align: left;">ID</th>
+                <tr style="background-color: #fcf8e3;">
+                    <th style="padding: 10px; text-align: left;">ID (Firebase)</th>
                     <th style="padding: 10px; text-align: left;">Usuário</th>
                     <th style="padding: 10px; text-align: left;">Cargo</th>
-                    <th style="padding: 10px; text-align: left;">Status</th>
                     <th style="padding: 10px; text-align: center;">Ação</th>
                 </tr>
             </thead>
             <tbody>
-                <% users.forEach(user => { %>
+                <% pendingUsers.forEach(user => { %>
                     <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 10px;"><%= user.id %></td>
-                        <td style="padding: 10px;"><%= user.username %></td>
+                        <% // O user.id é agora o ID do documento do Firestore %>
+                        <td style="padding: 10px; font-size: 10px; color: #777;"><%= user.id %></td>
+                        <td style="padding: 10px; font-weight: bold;"><%= user.username %></td>
                         <td style="padding: 10px;"><%= user.role %></td>
-                        <td style="padding: 10px; color: <%= user.approved ? 'green' : 'red' %>;">
-                            <%= user.approved ? 'Aprovado' : 'PENDENTE' %>
-                        </td>
                         <td style="padding: 10px; text-align: center;">
-                            <% if (!user.approved) { %>
-                                <form action="/admin/users/<%= user.id %>/approve" method="POST">
-                                    <button type="submit" 
-                                            style="background-color: #4CAF50; color: white; border: none; 
-                                                   padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                                        APROVAR
-                                    </button>
-                                </form>
-                            <% } else { %>
-                                -
-                            <% } %>
+                            <form action="/admin/users/<%= user.id %>/approve" method="POST" style="display: inline;">
+                                <button type="submit" 
+                                        style="background-color: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                    APROVAR
+                                </button>
+                            </form>
+                            <form action="/admin/users/<%= user.id %>/delete" method="POST" style="display: inline;">
+                                <button type="submit" 
+                                        onclick="return confirm('Tem certeza que deseja DELETAR o usuário <%= user.username %>?')" 
+                                        style="background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                    Excluir
+                                </button>
+                            </form>
                         </td>
                     </tr>
                 <% }) %>
             </tbody>
         </table>
     <% } else { %>
-        <p>Nenhum usuário cadastrado.</p>
+        <p style="margin-top: 15px; color: #777;">Nenhum usuário pendente de aprovação.</p>
+    <% } %>
+
+    
+    <h3 style="border-bottom: 2px solid #00bcd4; padding-bottom: 5px; margin-top: 40px; color: #00bcd4;">
+        Usuários Aprovados (<%= approvedUsers.length %>)
+    </h3>
+
+    <% if (approvedUsers && approvedUsers.length > 0) { %>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background: #fff;">
+            <thead>
+                <tr style="background-color: #e0f7fa;">
+                    <th style="padding: 10px; text-align: left;">ID (Firebase)</th>
+                    <th style="padding: 10px; text-align: left;">Usuário</th>
+                    <th style="padding: 10px; text-align: left;">Cargo</th>
+                    <th style="padding: 10px; text-align: center;">Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% approvedUsers.forEach(user => { %>
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 10px; font-size: 10px; color: #777;"><%= user.id %></td>
+                        <td style="padding: 10px; font-weight: bold;"><%= user.username %></td>
+                        <td style="padding: 10px;"><%= user.role %></td>
+                        <td style="padding: 10px; text-align: center;">
+                            <form action="/admin/users/<%= user.id %>/delete" method="POST" style="display: inline;">
+                                <button type="submit" 
+                                        onclick="return confirm('Tem certeza que deseja DELETAR o usuário <%= user.username %>?')" 
+                                        style="background-color: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px;">
+                                    Excluir
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    <% } else { %>
+        <p style="margin-top: 15px; color: #777;">Nenhum usuário aprovado ainda.</p>
     <% } %>
 </div>
+

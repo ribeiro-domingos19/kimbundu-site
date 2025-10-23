@@ -7,33 +7,72 @@
 
     <p><a href="/admin">← Voltar ao Painel Principal</a></p>
 
-    <% if (comments && comments.length > 0) { %>
-        <% comments.forEach(comment => { %>
-            <div style="border: 1px solid #ccc; padding: 15px; margin-bottom: 25px; border-radius: 8px; background: #fff;">
+    <h3 style="border-bottom: 2px solid #ff9800; padding-bottom: 5px; margin-top: 30px; color: #ff9800;">
+        Aguardando Resposta (<%= pendingComments.length %>)
+    </h3>
+    
+    <% // 💡 CORREÇÃO: Usa a variável pendingComments %>
+    <% if (pendingComments && pendingComments.length > 0) { %>
+        <% pendingComments.forEach(comment => { %>
+            <div style="border: 1px solid #ffcc80; padding: 15px; margin-bottom: 25px; border-radius: 8px; background: #fff;">
                 
                 <p style="font-size: 14px; color: #555;">
-		    <strong>Dúvida em Aula:</strong> <a href="/admin/lessons/<%= comment.lessonId %>" target="_blank" style="font-weight: bold; color: #00838f;">[ID <%= comment.lessonId %>] Visualizar Aula</a> | 
-                    <em>Por:</em> <%= comment.username %> em <%= new Date(comment.timestamp).toLocaleString() %>
+                    <strong>Dúvida em Aula:</strong> <a href="/admin/lessons/<%= comment.lessonId %>" target="_blank" style="font-weight: bold; color: #00838f;">[ID <%= comment.lessonId %>] Visualizar Aula</a> | 
+                    <em>Por:</em> **<%= comment.username %>** em <%= new Date(comment.timestamp).toLocaleString() %>
                 </p>
                 
-                <blockquote style="margin: 15px 0 15px 15px; padding-left: 10px; border-left: 3px solid #ffcc80; font-style: italic;">
+                <blockquote style="margin: 15px 0 15px 15px; padding-left: 10px; border-left: 3px solid #ff9800; font-style: italic; background: #fff3e0; padding: 10px;">
                     <%= comment.message %>
                 </blockquote>
 
-                <% if (!comment.adminResponse) { %>
-                    <form action="/admin/feedback/reply/<%= comment.id %>" method="POST">
-                        <h4 style="margin-bottom: 5px;">Sua Resposta:</h4>
-                        <textarea name="adminResponse" rows="3" style="width: 100%; border: 1px solid #ddd; padding: 8px;" required></textarea>
-                        <button type="submit" style="background-color: #00bcd4; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 10px;">
-                            Enviar Resposta
-                        </button>
-                    </form>
-                <% } %>
+                <form action="/admin/feedback/reply/<%= comment.id %>" method="POST">
+                    <h4 style="margin-bottom: 5px;">Sua Resposta:</h4>
+                    <textarea name="adminResponse" rows="3" style="width: 100%; border: 1px solid #ddd; padding: 8px;" required></textarea>
+                    <button type="submit" style="background-color: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 10px;">
+                        Enviar Resposta
+                    </button>
+                </form>
             </div>
         <% }) %>
     <% } else { %>
-        <div style="padding: 20px; background: #f0fff0; border: 1px solid #d0e0d0; border-radius: 4px;">
-            <p>🎉 Não há comentários pendentes de resposta!</p>
+        <div style="padding: 20px; background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; color: #777;">
+            Nenhum feedback pendente de resposta.
+        </div>
+    <% } %>
+
+
+    <h3 style="border-bottom: 2px solid #00bcd4; padding-bottom: 5px; margin-top: 40px; color: #00bcd4;">
+        Já Respondido (<%= respondedComments.length %>)
+    </h3>
+    
+    <% // 💡 CORREÇÃO: Usa a variável respondedComments %>
+    <% if (respondedComments && respondedComments.length > 0) { %>
+        <% respondedComments.forEach(comment => { %>
+            <div style="border: 1px solid #00bcd4; padding: 15px; margin-bottom: 25px; border-radius: 8px; background: #f0f8ff;">
+                
+                <p style="font-size: 14px; color: #555;">
+                    <strong>Dúvida em Aula:</strong> <a href="/admin/lessons/<%= comment.lessonId %>" target="_blank" style="font-weight: bold; color: #00838f;">[ID <%= comment.lessonId %>] Visualizar Aula</a> | 
+                    <em>Por:</em> **<%= comment.username %>** em <%= new Date(comment.timestamp).toLocaleString() %>
+                </p>
+                
+                <blockquote style="margin: 15px 0 15px 15px; padding-left: 10px; border-left: 3px solid #00bcd4; font-style: italic; background: #e0f7fa; padding: 10px;">
+                    <%= comment.message %>
+                </blockquote>
+
+                <div style="margin-top: 15px; padding: 10px; border: 1px dashed #00bcd4; background: #fff;">
+                    <h4 style="margin-bottom: 5px; color: #00838f;">
+                        Resposta do Administrador (<%= comment.adminName || 'Admin' %>):
+                    </h4>
+                    <p style="margin: 0;">
+                        <%= comment.adminResponse %>
+                    </p>
+                </div>
+            </div>
+        <% }) %>
+    <% } else { %>
+        <div style="padding: 20px; background: #f9f9f9; border: 1px solid #eee; border-radius: 4px; color: #777;">
+            Nenhum feedback respondido ainda.
         </div>
     <% } %>
 </div>
+

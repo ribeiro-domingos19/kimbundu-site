@@ -1,15 +1,24 @@
-introdução
+# Saudações Iniciais em Kimbundu
 
-Este é um teste em *Markdown*.
+## Vídeo da Aula
 
-## Lista
+[vimeo:946939921] 
+(Substitua o número acima pelo ID do seu vídeo do Vimeo)
 
-- Item 1
-- Item 2
-- Item 3
+## O Essencial para Começar
 
-## Link
+Esta é a primeira aula do seu curso. Vamos aprender as saudações mais básicas para que você possa iniciar uma conversa.
 
-[Acesse JW.org](https://www.jw.org)
+- Moni (Olá)
+- Sabala (Bom Dia)
+- Xikola (Boa Tarde)
 
+[img:mapa_angola.png]
+
+## Pronúncia Correta
+
+Ouça a pronúncia da palavra "Olá":
+[audio:moni.mp3]
+
+A prática diária é fundamental para memorizar estas expressões.
 

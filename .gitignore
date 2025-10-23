@@ -1,0 +1,19 @@
+# ------------------------------------
+# DEPENDÊNCIAS
+# ------------------------------------
+/node_modules
+
+# ------------------------------------
+# VARIÁVEIS DE AMBIENTE E ARQUIVOS DE CONFIGURAÇÃO SECRETA
+# ------------------------------------
+.env
+.env.local
+.env.*.local
+
+# ------------------------------------
+# ARQUIVOS SECRETOS DO FIREBASE (NÃO DEVE IR PARA O REPOSITÓRIO)
+# ------------------------------------
+# Se você usou o método de ler o arquivo localmente (recomendado para teste local)
+firebase-key.json
+*.firebase-adminsdk-*.json
+

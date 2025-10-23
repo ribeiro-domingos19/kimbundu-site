@@ -3,23 +3,36 @@
     <div class="header">
         <h1 style="margin-bottom: 20px">Bem-vindo ao Curso de Kimbundu!</h1>
     </div>
-    <div style="text-align: center; padding: 40px 0; border: 3px solid #ddd; border-radius: 8px">
-        
         <% 
             // 🚨 NOVO: Verifica se o usuário está logado.
             if (typeof user !== 'undefined' && user) { 
         %>
+	<section class="section">
             <p style="margin-bottom: 20px; font-size: 1.1em;">
                 Bem-vindo(a) de volta, <strong><%= user.username %></strong>!
             </p>
-            <a href="/lessons" class="button" style="background-color: #fff; border: 2px solid #4CAF50; padding: 5px; border-radius: 4px">Ir para as Aulas</a>
+            <a href="/lessons">Ir pra Aulas</a>
+	    </section>
             
         <% } else { %>
+	<section class="section">
+            <p style="margin-bottom: 20px;">Este é o seu portal para aprender Kimbundu.<br>Aqui você encontrará aulas preparadas especialmente para si que está interessado em saber mais sobre o idioma <strong>Kimbundu</strong>.</p>
+	</section>
+	<section class="section">
+	   <p>
+ O Kimbundu é uma língua Bantu, pertencente à etnia dos <strong>Ambundus</strong>
+ Fala-se principalmente no noroeste de Angola: províncias de <em>Luanda, Bengo, Malanje, Cuanza Norte</em>.
+	   </p>
+	</section>
 
-            <p style="margin-bottom: 20px;">Este é o seu portal para aprender Kimbundu.<br>Aqui você encontrará aulas preparadas especialmente para si que não tem nocão da língua <strong>Kimbundu</strong>.</p>
-            <a href="/auth/login" class="button">Clique aqui para Entrar</a>
+<section class="section">
+<p>
+ Estimativas apontam entre <em>~1,6 a ~4 milhões</em> de falantes
+ É uma língua nacional de Angola (não sendo a língua oficial, que é o português), com presença forte na cultura local, mídia, música etc.
+    </p>
+    </section>
+            <a href="/auth/login" class="button" style="text-align: center; background-color: #2ecc71; color: #fff; display: block; padding: 5px; width: 50% auto; border-radius: 5px">Clique aqui para Entrar</a>
             
         <% } %>
-    </div>
     </div>
 

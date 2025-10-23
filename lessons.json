@@ -1,34 +1,20 @@
 [
   {
-    "id": 101,
+    "id": 1,
     "title": "Saudações ",
-    "description": "Aprenda sobre as saudações em kimbundu",
-    "module": "1",
     "content_file": "saudacoes",
-    "release_date": null
-  },
-  {
-    "id": 102,
-    "title": "SHOW",
-    "description": "Apenas uma demonstração de links",
-    "module": "Módulo 2",
-    "content_file": "show",
-    "release_date": null
-  },
-  {
-    "id": 103,
-    "title": "Vídeo do YouTube ",
-    "description": "Testando vídeo do YouTube",
-    "module": "Módulo 1",
-    "content_file": "cores",
-    "release_date": null
-  },
-  {
-    "id": 104,
-    "title": "Test",
-    "description": "Teste apenas",
-    "module": "Módulo 1",
-    "content_file": "show",
-    "release_date": null
-  }
+    "quiz": true, 
+    "questions":
+    {
+  	"q1": {
+    		"text": "Como se diz bom dia em kimbundu?",
+    		"options": 
+		["Wazekele", 
+		"kyambote?", 
+		"Mwene"
+		],
+   	 "answer": 0 
+       	     }
+    }
+   }
 ]

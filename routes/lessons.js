@@ -1,212 +1,214 @@
-// routes/lessons.js (CÓDIGO COMPLETO E CORRIGIDO PARA EXIBIR COMENTÁRIOS)
+// ===========================================
+// routes/lessons.js 
+// ===========================================
 
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
 
-// 💡 CORREÇÃO 1: Importa getComments
-const { getLessons, getLessonContent, getMessages, getComments } = require('../database'); 
+const MIN_PASS_SCORE = 0.7;
+const { 
+    getLessons, getLessonContent, 
+    getUserProgress, markLessonComplete,
+    getComments, 
+    getMessages, 
+    getSubmissionLogs,
+    // 💡 CORREÇÃO CRÍTICA: A função para salvar é saveNewComment, não saveComments.
+    saveNewComment,
+    logQuizSubmission
+} = require('../database');
+
+const { requireAuth } = require('./auth');
 const { parseLessonContent } = require('../utils/parser');
-const { requireAuth } = require('./auth'); // middleware de login
 
-
-// Função para salvar o log de submissões do Quiz (simulação de DB)
-function saveSubmissionLog(logEntry) {
-    const logPath = path.join(__dirname, '..', 'content', 'quiz_submissions.json');
-    let logs = [];
-    
-    // Tenta ler logs existentes
-    if (fs.existsSync(logPath)) {
-        try {
-            logs = JSON.parse(fs.readFileSync(logPath, 'utf8'));
-        } catch (e) {
-            console.error("Erro ao ler log de submissões:", e);
-        }
-    }
-    
-    logs.push(logEntry);
-    fs.writeFileSync(logPath, JSON.stringify(logs, null, 2), 'utf8');
-}
-
-// Função para salvar o COMENTÁRIO/FEEDBACK (simulação de DB)
-function saveComment(commentEntry) {
-    // Caminho para o comments.json na raiz do projeto
-    const commentsPath = path.join(__dirname, '..', 'comments.json');
-    let comments = [];
-    
-    if (fs.existsSync(commentsPath)) {
-        try {
-            comments = JSON.parse(fs.readFileSync(commentsPath, 'utf8'));
-        } catch (e) {
-            console.error("Erro ao ler arquivo de comentários:", e);
-        }
-    }
-    
-    // Garante que os campos de ID e Resposta do Admin estejam corretos
-    commentEntry.id = Date.now().toString(); 
-    commentEntry.status = 'pending'; // Status inicial
-    commentEntry.adminResponse = null; 
-    
-    comments.push(commentEntry);
-    fs.writeFileSync(commentsPath, JSON.stringify(comments, null, 2), 'utf8');
-}
-
-
-// --- LÓGICA DE PROCESSAMENTO DO QUIZ ---
-router.post('/:id/submit', requireAuth, (req, res) => {
-// ... código omitido (mantido o original para o quiz) ...
-  const lessonId = req.params.id;
-  const userAnswers = req.body; 
-  const user = req.user;
-
-  const solutionsPath = path.join(__dirname, '..', 'content', `solutions_${lessonId}.json`);
-
-  if (!fs.existsSync(solutionsPath)) {
-    console.warn(`Aviso: Nenhuma solução encontrada para o quiz ${lessonId}.`);
-    return res.redirect(`/lessons/${lessonId}`); 
-  }
-
-  const solutions = JSON.parse(fs.readFileSync(solutionsPath, 'utf8'));
-  let score = 0;
-  
-  Object.keys(solutions).forEach(qKey => {
-    const correctAnswerIndex = solutions[qKey];
-    const userAnswerIndex = userAnswers[qKey];
-
-    if (userAnswerIndex && parseInt(userAnswerIndex) === correctAnswerIndex) {
-      score++;
-    }
-  });
-
-  const totalQuestions = Object.keys(solutions).length;
-  const submissionLog = {
-      timestamp: new Date().toISOString(),
-      userId: user.id,
-      username: user.username,
-      lessonId: lessonId,
-      score: score,
-      total: totalQuestions,
-      userAnswers: userAnswers
-  };
-  
-  saveSubmissionLog(submissionLog);
-
-  req.session.quizResult = { 
-      score, 
-      total: totalQuestions, 
-      message: `Você acertou ${score} de ${totalQuestions} perguntas no quiz!` 
-  };
-  
-  res.redirect(`/lessons/${lessonId}`);
-});
-
-
-// --- LÓGICA DE ENVIO DE FEEDBACK (CORRIGIDA) ---
-router.post('/:id/feedback', requireAuth, (req, res) => {
-    const lessonId = parseInt(req.params.id); 
-    const message = req.body.message; 
-    const user = req.user; 
-
-    if (!message || message.trim() === "") {
-        req.session.errorMessage = "A mensagem de feedback não pode estar vazia.";
-        return res.redirect(`/lessons/${lessonId}`);
-    }
-
-    const commentLog = {
-        timestamp: new Date().toISOString(),
-        userId: user.id, 
-        // 🚨 CORREÇÃO 3: MUDANÇA DE 'userName' PARA 'username' (para consistência com feedback.ejs)
-        username: user.username, 
-        lessonId: lessonId,
-        // 🚨 CORREÇÃO 4: MUDANÇA DE 'text' PARA 'message' (para consistência com feedback.ejs)
-        message: message 
-    };
-    
-    saveComment(commentLog);
-
-    req.session.successMessage = "Sua dúvida/feedback foi enviado com sucesso para a administração!";
-
-    res.redirect(`/lessons/${lessonId}`);
-});
-
-
-// Rota GET para exibir o formulário do quiz
-router.get('/:id/quiz', requireAuth, (req, res) => {
-// ... código omitido (mantido o original para o quiz) ...
-  const lessonId = req.params.id;
-  const quizPath = path.join(__dirname, '..', 'content', `quiz_${lessonId}.json`);
-
-  if (!fs.existsSync(quizPath)) {
-    return res.send("Nenhum quiz disponível para esta aula.");
-  }
-
-  const quizData = JSON.parse(fs.readFileSync(quizPath, 'utf8'));
-  res.render('lessons/quiz', { quiz: quizData, lessonId }); 
-});
-
-
-// Lista todas as aulas
+// Rota principal da área logada, lista todas as aulas
 router.get('/', requireAuth, (req, res) => {
-// ... código omitido (mantido o original para listagem) ...
-  const lessons = getLessons();
-  const messages = getMessages();
-  res.render('lessons/index', { 
-      lessons, 
-      messages, 
-      user: req.user,
-      title: 'Todas as Aulas' 
-  });
-});
-
-// Visualizar uma aula específica (ATUALIZADA para carregar COMENTÁRIOS)
-router.get('/:id', requireAuth, (req, res) => {
-  const lessonId = parseInt(req.params.id); // Convertido para inteiro para filtrar corretamente
-  const lessons = getLessons();
-  const lesson = lessons.find(l => l.id === lessonId); // Compara inteiros
-
-  if (!lesson) {
-    return res.status(404).send('Aula não encontrada.');
-  }
-
-  try {
-    const rawContent = getLessonContent(lessonId);
-    const formattedHtml = parseLessonContent(rawContent);
-    const messages = getMessages();
-
-    // Lógica para carregar e filtrar COMENTÁRIOS
-    const allComments = getComments();
-    const lessonComments = allComments
-        .filter(c => c.lessonId.toString() === lessonId.toString()) // Filtra por ID da aula
-        // Ordena: mais antigo primeiro
-        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); 
-
-    // LÓGICA DE MENSAGENS DE SESSÃO: Recupera e Limpa a Sessão
-    const quizResult = req.session.quizResult;
-    delete req.session.quizResult; 
-    
-    const successMessage = req.session.successMessage;
-    delete req.session.successMessage;
-    const errorMessage = req.session.errorMessage;
-    delete req.session.errorMessage;
-    
-    res.render('lessons/show', {
-      lesson,
-      content: formattedHtml,
-      messages,
-      user: req.user,
-      title: lesson.title,
-      quizResult: quizResult,
-      successMessage: successMessage, 
-      errorMessage: errorMessage,
-      // Passa os COMENTÁRIOS filtrados para o template
-      comments: lessonComments 
+    const lessons = getLessons(); // Síncrono, OK (lê JSON local)
+    res.render('lessons/index', { 
+        lessons, 
+        title: 'Aulas',
+        user: req.user
     });
-  } catch (err) {
-    console.error('Erro ao carregar aula:', err);
-    res.status(500).send('Erro ao carregar o conteúdo da aula.');
-  }
 });
+
+// Rota para marcar aula como concluída
+router.post('/complete/:lessonId', requireAuth, async (req, res) => {
+    const lessonId = req.params.lessonId;
+    
+    try {
+        // markLessonComplete é assíncrona
+        await markLessonComplete(req.user.id, lessonId); 
+        res.redirect(`/lessons/${lessonId}?complete=true`);
+    } catch (e) {
+        console.error("Erro ao marcar aula como completa:", e);
+        res.status(500).send("Erro ao salvar progresso.");
+    }
+});
+
+
+// Rota de visualização de aula (GET /lessons/:id)
+router.get('/:id', requireAuth, async (req, res) => { 
+    const lessonId = req.params.id;
+    
+    try {
+        const rawContent = getLessonContent(lessonId); // Síncrono (lê TXT local)
+        const lessonHtml = parseLessonContent(rawContent);
+        
+        // Funções assíncronas (Firebase)
+        const messages = await getMessages(); 
+        const userProgress = await getUserProgress(req.user.id); 
+        const allComments = await getComments(); 
+        
+        const comments = allComments
+            .filter(c => c.lessonId.toString() === lessonId.toString()) 
+            .sort((a, b) => {
+                if (a.status === 'responded' && b.status !== 'responded') return -1;
+                if (a.status !== 'responded' && b.status === 'responded') return 1;
+                return new Date(b.timestamp) - new Date(a.timestamp); 
+            });
+
+
+        let successMsg = null;
+        let errorMsg = null;
+        
+        if (req.query.complete === 'true') {
+            successMsg = 'Parabéns! Aula marcada como concluída.';
+        } else if (req.query.quiz === 'success') {
+            successMsg = 'Parabéns! Quiz concluído com sucesso e aula marcada como concluída.';
+        } else if (req.query.quiz === 'fail') {
+            errorMsg = 'Resposta do quiz incorreta. Tente novamente!';
+        }
+        
+        const isComplete = userProgress.includes(parseInt(lessonId));
+        const lesson = getLessons().find(l => l.id.toString() === lessonId.toString());
+
+        if (!lesson) {
+            return res.status(404).send('Aula não encontrada.');
+        }
+
+        res.render('lessons/show', {
+            lesson,
+            content: lessonHtml,
+            isComplete,
+            comments,
+            messages,
+            successMessage: successMsg,
+            errorMessage: errorMsg, 
+            title: lesson.title,
+            user: req.user,
+            quizSuccess: req.query.quiz === 'success',
+            lessonId: parseInt(lessonId) 
+        });
+
+    } catch (e) {
+        console.error(`Erro ao carregar aula ${lessonId}:`, e);
+        res.status(500).send(`Erro interno ao carregar a aula. Por favor, verifique a mensagem de erro no console do servidor.`);
+    }
+});
+
+// Rota POST para envio de Feedback
+router.post('/:lessonId/feedback', requireAuth, async (req, res) => {
+    const lessonId = req.params.lessonId;
+    const { message } = req.body; 
+    
+    if (!lessonId || !message || !req.user) {
+        return res.status(400).send('Dados inválidos ou usuário não logado.');
+    }
+
+    try {
+        const newComment = {
+            // Os dados necessários para o database.js (Firebase)
+            lessonId: parseInt(lessonId),
+            userId: req.user.id, 
+            username: req.user.username, 
+            message: message,
+            adminResponse: null, 
+            status: 'pending' 
+        };
+
+        // 💡 CORREÇÃO CRÍTICA: Chama a função saveNewComment (assíncrona).
+        await saveNewComment(newComment); 
+
+        // Redireciona de volta para a aula, pulando para a seção de comentários
+        res.redirect(`/lessons/${lessonId}#comments`);
+
+    } catch (e) {
+        console.error("Erro ao enviar feedback:", e);
+        res.status(500).send("Erro interno ao enviar o feedback. Consulte o console do servidor para detalhes.");
+    }
+});
+
+router.post('/:lessonId/quiz', requireAuth, async (req, res) => { // 💡 MUDE A ROTA PARA USAR /:lessonId/quiz
+    const lessonId = req.params.lessonId;
+    const userAnswers = req.body; // Recebe { q1: '0', q2: '1', ... }
+
+    try {
+        const lessons = getLessons(); 
+        const lesson = lessons.find(l => l.id.toString() === lessonId.toString());
+
+        if (!lesson || !lesson.questions) {
+            return res.status(404).send('Dados do quiz não encontrados.');
+        }
+
+        const correctQuestions = lesson.questions;
+        let score = 0;
+        const totalQuestions = Object.keys(correctQuestions).length;
+
+        // 1. Lógica de Correção
+        for (const qKey in userAnswers) {
+            // Verifica se a chave do formulário existe no gabarito
+            if (correctQuestions[qKey]) {
+                const correctAnswerIndex = correctQuestions[qKey].answer;
+                const userAnswerIndex = parseInt(userAnswers[qKey]);
+                
+                // Compara a resposta do usuário (índice) com a resposta correta (índice)
+                if (userAnswerIndex === correctAnswerIndex) {
+                    score++;
+                }
+            }
+        }
+        
+        // 2. Lógica de Aprovação
+        const passRate = score / totalQuestions;
+        const passed = passRate >= MIN_PASS_SCORE;
+
+        // 3. Salva o Log no Firebase
+        await logQuizSubmission(req.user.id, req.user.username, lessonId, score, totalQuestions, passed);
+
+        // 4. Marca como completo se aprovado
+        if (passed) {
+            await markLessonComplete(req.user.id, lessonId); 
+            // Redireciona com sucesso
+            return res.redirect(`/lessons/${lessonId}?quiz=success`);
+        } else {
+            // Redireciona com falha
+            return res.redirect(`/lessons/${lessonId}?quiz=fail`);
+        }
+
+    } catch (e) {
+        console.error("Erro ao processar submissão do quiz:", e);
+        res.status(500).send("Erro interno ao processar o quiz.");
+    }
+});
+
+// Rota GET para a página do quiz (GET /lessons/:lessonId/quiz)
+router.get('/:lessonId/quiz', requireAuth, (req, res) => {
+    const lessonId = req.params.lessonId;
+    const lessons = getLessons(); 
+    const lesson = lessons.find(l => l.id.toString() === lessonId.toString());
+
+    if (!lesson) {
+        return res.status(404).send('Quiz não encontrado para esta aula.');
+    }
+    
+    res.render('lessons/quiz', {
+        lesson,
+        quiz: lesson, // Define 'quiz' para o EJS usar 'quiz.questions'
+        lessonId: parseInt(lessonId),
+        title: `Quiz: ${lesson.title}`,
+        user: req.user
+    });
+});
+
 
 module.exports = { router };
 

@@ -2,23 +2,36 @@
 <div class="container">
   <h2>Quiz da Aula <%= lessonId %></h2>
 
-  <form method="POST" action="/lessons/<%= lessonId %>/submit">
-    <% // Itera sobre as chaves (qKey, ex: 'q1') do objeto quiz.questions %>
-    <% Object.keys(quiz.questions).forEach(function(qKey, index) { 
-         const q = quiz.questions[qKey]; %>
-      <div style="margin-bottom:20px;">
-        <% // qKey é usado como o 'name' do input, o que o servidor espera. %>
-        <p><b><%= index + 1 %>. <%= q.text %></b></p>
-        <% q.options.forEach(function(opt, idx) { %>
-          <label>
-            <% // O 'value' é o índice (idx) da resposta. %>
-            <input type="radio" name="<%= qKey %>" value="<%= idx %>" required>
-            <%= opt %>
-          </label><br>
-        <% }); %>
-      </div>
-    <% }); %>
-    <button type="submit">Enviar Respostas</button>
-  </form>
+  <p><a href="/lessons/<%= lessonId %>">← Voltar para a Aula</a></p>
+
+  <% // 💡 CORREÇÃO AQUI: Verifica se 'quiz' e 'quiz.questions' existem %>
+  <% if (quiz && quiz.questions && Object.keys(quiz.questions).length > 0) { %>
+
+    <form method="POST" action="/lessons/<%= lessonId %>/quiz"> 
+      <% // Itera sobre as chaves (qKey, ex: 'q1') do objeto quiz.questions %>
+      <% Object.keys(quiz.questions).forEach(function(qKey, index) { 
+           const q = quiz.questions[qKey]; %>
+        <div style="margin-bottom:20px;">
+          <% // qKey é usado como o 'name' do input, o que o servidor espera. %>
+          <p><b><%= index + 1 %>. <%= q.text %></b></p>
+          <% q.options.forEach(function(opt, idx) { %>
+            <label>
+              <% // O 'value' é o índice (idx) da resposta. %>
+              <input type="radio" name="<%= qKey %>" value="<%= idx %>" required>
+              <%= opt %>
+            </label><br>
+          <% }); %>
+        </div>
+      <% }); %>
+      <button type="submit" style="background-color: #00bcd4; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-top: 10px;">
+        Enviar Respostas
+      </button>
+    </form>
+
+  <% } else { %>
+    <div style="padding: 15px; margin-bottom: 20px; border: 1px solid #ffcc00; background-color: #fffde7; color: #ff9800; border-radius: 4px;">
+        <strong>Erro:</strong> Não há perguntas de quiz configuradas para esta aula.
+    </div>
+  <% } %>
 </div>
 

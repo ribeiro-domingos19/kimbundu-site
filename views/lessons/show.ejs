@@ -13,12 +13,13 @@
 
   <% if (successMessage) { %>
     <div style="padding: 10px; margin-bottom: 10px; border: 1px solid #4CAF50; background-color: #e8f5e9; color: #388E3C; border-radius: 4px;">
-        <%= successMessage %>
+      <%= successMessage %>
     </div>
   <% } %>
+
   <% if (errorMessage) { %>
     <div style="padding: 10px; margin-bottom: 10px; border: 1px solid #F44336; background-color: #ffebee; color: #D32F2F; border-radius: 4px;">
-        <%= errorMessage %>
+      <%= errorMessage %>
     </div>
   <% } %>
 
@@ -26,45 +27,135 @@
     <%= lesson.title %>
   </h2>
 
-  <div style="background:#fff; padding:20px; border:1px solid #ddd; border-radius:8px; margin-top:20px;">
+  <div style="
+        background: #fff;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        max-height: 75vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+  ">
     <%- content %>
   </div>
 
   <% if (typeof quizResult !== 'undefined' && quizResult) { %>
     <div style="padding: 15px; margin-bottom: 20px; border: 1px solid #4CAF50; background-color: #e8f5e9; color: #388E3C; border-radius: 4px;">
-        <strong>Resultado do Quiz:</strong> <%= quizResult.message %>
-        (Pontuação: <%= quizResult.score %>/<%= quizResult.total %>)
+      <strong>Resultado do Quiz:</strong> <%= quizResult.message %> (Pontuação: <%= quizResult.score %>/<%= quizResult.total %>)
     </div>
   <% } %>
 
+  <!-- SEÇÃO DE FEEDBACK -->
   <div style="background:#f9f9f9; padding:20px; border:1px solid #eee; border-radius:8px; margin-top:25px;">
   <h3>Dúvidas e Feedback</h3>
 
-<% if (comments && comments.length > 0) { %>
-    <% comments.forEach(comment => { %>
-        <div class="comment-item">
-            <p><strong><%= comment.username %>:</strong> <%= comment.message %></p>
+  <button id="openModalBtn" style="background-color: #00bcd4; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">
+    Ver/Enviar Feedback (<%= comments.length %>)
+  </button>
+</div>
+<p style="margin-top: 20px;">
+            <a href="/lessons/<%= lesson.id %>/quiz" 
+               style="display: inline-block; padding: 10px 15px; background-color: #f39c12; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                Fazer o Quiz da Aula
+            </a>
+        </p>
 
-            <% if (comment.adminResponse) { %>
-                <div class="admin-reply">
-                    <p><strong>Resposta da Administração:</strong> <%= comment.adminResponse %></p>
+<div id="feedbackModal" style="
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.7);
+  align-items: center;
+  justify-content: center;
+">
+  <div style="
+    background-color: #fefefe;
+    margin: auto;
+    padding: 25px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 700px;
+    border-radius: 10px;
+  ">
+    <h3 style="border-bottom: 2px solid #eee; padding-bottom: 10px;">Feedback e Dúvidas - Aula <%= lesson.id %></h3>
+
+    <h4 style="margin-top: 20px;">Enviar sua Dúvida/Feedback</h4>
+    <form action="/lessons/<%= lesson.id %>/feedback" method="POST" style="margin-bottom: 30px;">
+        <textarea name="message" placeholder="Deixe sua dúvida/feedback..." rows="3" style="width: 100%; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;" required></textarea>
+        <button type="submit" style="background-color: #00bcd4; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">
+            Enviar Feedback
+        </button>
+    </form>
+
+    <h4 style="border-bottom: 1px solid #ccc; padding-bottom: 5px;">Comentários Anteriores (<%= comments.length %>)</h4>
+
+    <div style="max-height: 400px; overflow-y: auto; padding-right: 15px;">
+        <% if (comments && comments.length > 0) { %>
+            <% comments.forEach(comment => { %>
+                <div style="border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 6px; background: #fff; <%= comment.adminResponse ? 'border-color: #00bcd4; background: #f0f8ff;' : '' %>">
+
+                    <p style="font-size: 14px; color: #555; margin-bottom: 10px;">
+                        <strong><%= comment.username === user.username ? 'Você' : comment.username %></strong>
+                        em <%= new Date(comment.timestamp).toLocaleString() %>
+
+                        <span style="float: right; font-weight: bold; color: <%= comment.adminResponse ? '#00bcd4' : '#ff9800' %>;">
+                            <%= comment.adminResponse ? '✅ Respondido' : '🕒 Pendente' %>
+                        </span>
+                    </p>
+
+                    <blockquote style="margin: 0; padding: 10px; border-left: 3px solid #ffcc80; font-style: italic; background: #fff3e0; border-radius: 4px;">
+                        <%= comment.message %>
+                    </blockquote>
+
+                    <% if (comment.adminResponse) { %>
+                        <div style="margin-top: 15px; padding: 10px; border: 1px dashed #00bcd4; background: #e0f7fa; border-radius: 4px;">
+                            <h4 style="margin-bottom: 5px; color: #00838f;">
+                                Resposta do Administrador (<%= comment.adminName || 'Admin' %>):
+                            </h4>
+                            <p style="margin: 0; white-space: pre-wrap;"><%= comment.adminResponse %></p>
+                        </div>
+                    <% } %>
                 </div>
-            <% } %>
-        </div>
-        <hr>
-    <% }) %>
-<% } else { %>
-    <p>Nenhum feedback ainda. Envie sua dúvida ou comentário abaixo.</p>
-<% } %>
+            <% }) %>
+        <% } else { %>
+            <p style="color: #777;">Nenhum comentário enviado ainda para esta aula.</p>
+        <% } %>
+    </div>
 
-<form action="/lessons/<%= lesson.id %>/feedback" method="POST">
-    <textarea name="message" placeholder="Deixe sua dúvida/feedback aqui..." required></textarea>
-    <button type="submit">Enviar Feedback</button>
-</form>
+
+    <button id="closeModalBtn" style="margin-top:15px; padding:8px 12px; background:#f44336; color:white; border:none; border-radius:4px; cursor:pointer;">
+      Fechar
+    </button>
   </div>
+</div>
 
-  <a href="/lessons/<%= lesson.id %>/quiz"
-       style="display:inline-block; margin-top:20px; padding:10px 15px; background:#2196F3; color:#fff; border-radius:4px; text-decoration:none;">
-       Fazer Quiz
-  </a>
+<script>
+  const openModalBtn = document.getElementById('openModalBtn');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const feedbackModal = document.getElementById('feedbackModal');
+
+  if (openModalBtn && feedbackModal) {
+    openModalBtn.addEventListener('click', () => {
+      feedbackModal.style.display = 'flex';
+    });
+  }
+
+  if (closeModalBtn && feedbackModal) {
+    closeModalBtn.addEventListener('click', () => {
+      feedbackModal.style.display = 'none';
+    });
+  }
+
+  // Fecha o modal se clicar fora da caixa
+  window.addEventListener('click', (event) => {
+    if (event.target === feedbackModal) {
+      feedbackModal.style.display = 'none';
+    }
+  });
+</script>
 </div>
