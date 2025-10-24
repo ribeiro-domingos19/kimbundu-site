@@ -5,14 +5,15 @@ const admin = require('firebase-admin');
 const path = require('path');
 const fs = require('fs');
 
-// Variáveis de Ambiente esperadas para o DEPLOY (Vercel/Produção)
+// VARIÁVEIS SEPARADAS ESPERADAS NO VERCEL
 const projectID = process.env.FIREBASE_PROJECT_ID; 
 const clientEmail = process.env.FIREBASE_CLIENT_EMAIL; 
 const privateKeyString = process.env.FIREBASE_PRIVATE_KEY; 
+const privateKeyId = process.env.FIREBASE_PRIVATE_KEY_ID; 
 
 let serviceAccount;
 
-// 1. Tenta Conectar via Variáveis de Ambiente Separadas (Produção)
+// 1. Tenta Conectar via Variáveis de Ambiente Separadas (Produção/Vercel)
 if (projectID && clientEmail && privateKeyString) {
     
     console.log("🔥 Firebase: Conectado via Variáveis de Ambiente Separadas (Produção).");
@@ -20,19 +21,18 @@ if (projectID && clientEmail && privateKeyString) {
     // CORREÇÃO CRUCIAL: Substitui literais '\n' pela quebra de linha real.
     const correctedPrivateKey = privateKeyString.replace(/\\n/g, '\n'); 
 
-    // Constrói o objeto de credenciais de serviço
+    // Constrói o objeto de credenciais de serviço, usando os valores do seu JSON original
     serviceAccount = {
         type: "service_account",
         project_id: projectID,
-        private_key: correctedPrivateKey, // Chave corrigida
+        private_key: correctedPrivateKey,
         client_email: clientEmail,
-        // Inclui outras propriedades (lidas de variáveis opcionais)
-        private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID || '', 
-        client_id: process.env.FIREBASE_CLIENT_ID || '',
+        private_key_id: privateKeyId || 'daa8ca8cb8135001b991fdf74ab9b79efb592fcc', 
+        client_id: process.env.FIREBASE_CLIENT_ID || '116165920126992947607',
         auth_uri: "https://accounts.google.com/o/oauth2/auth",
         token_uri: "https://oauth2.googleapis.com/token",
         auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-        client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL || '',
+        client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL || 'https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40kimbundu-site.iam.gserviceaccount.com',
         universe_domain: "googleapis.com"
     };
 
