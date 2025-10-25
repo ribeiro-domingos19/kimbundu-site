@@ -1,9 +1,4 @@
 [
-  {
-    "id": 1,
-    "title": "Saudações ",
-    "content_file": "saudacoes",
-    "quiz": true, 
     "questions":
     {
   	"q1": {
@@ -16,5 +11,4 @@
    	 "answer": 0 
        	     }
     }
-   }
 ]
