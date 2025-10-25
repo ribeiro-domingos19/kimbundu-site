@@ -10,8 +10,7 @@ const crypto = require('crypto');
 // 💡 MUDANÇA: Substitui saveUsers por addNewUser
 const { getUsers, addNewUser } = require('../database'); 
 
-const JWT_SECRET = "super_secreto_json_key"; 
-
+const JWT_SECRET = process.env.JWT_SECRET;
 // --- Configuração de Hashing (scrypt) ---
 const HASH_CONFIG = {
     keylen: 64, 
