@@ -9,12 +9,10 @@ const fs = require('fs');
 const path = require('path');
 
 // --- Caminhos e Arquivos Locais (Preservados) ---
-
 const contentPath = path.join(__dirname, 'content');
 const lessonsPath = path.join(__dirname, 'lessons.json');
 
 // --- Funções Auxiliares Comuns ---
-
 const mapSnapshotToData = (snapshot) => {
     return snapshot.docs.map(doc => ({ 
         id: doc.id, // ID do Firestore
@@ -23,7 +21,6 @@ const mapSnapshotToData = (snapshot) => {
 };
 
 // --- Funções Específicas para Usuários ('users' Collection) ---
-
 const getUsers = async () => {
     const snapshot = await db.collection('users').get();
     return mapSnapshotToData(snapshot);
@@ -41,36 +38,32 @@ const approveUser = async (userFirestoreId) => {
     });
 };
 
-const updateUser = async (userFirestoreId, data) => {
+const updateUser = async (userFirestoreId, newData) => {
     const docRef = db.collection('users').doc(userFirestoreId);
-    await docRef.update(data);
+    await docRef.update(newData);
 };
 
-const deleteUser = async (userFirestoreId) => {
-    // Apagar o usuário
+const deleteUser = async (userFirestoreId, userId) => {
     await db.collection('users').doc(userFirestoreId).delete();
-    // Apagar o progresso do usuário (coleção 'progress' onde o ID é o userFirestoreId)
-    await db.collection('progress').doc(userFirestoreId).delete();
+    if (userId) {
+       await db.collection('progress').doc(userId.toString()).delete(); 
+    }
 };
 
-
-// --- Funções Síncronas para Lições (JSON local) ---
-
-// Síncrona: Lê o lessons.json
+// --- Funções de Lições (Arquivos Locais) ---
 const getLessons = () => {
-    if (fs.existsSync(lessonsPath)) {
+    try {
         const data = fs.readFileSync(lessonsPath, 'utf8');
         return JSON.parse(data);
+    } catch (error) {
+        return [];
     }
-    return [];
 };
 
-// Síncrona: Escreve no lessons.json
 const saveLessons = (lessons) => {
     fs.writeFileSync(lessonsPath, JSON.stringify(lessons, null, 2), 'utf8');
 };
 
-// Síncrona: Lê o conteúdo .txt
 const getLessonContent = (lessonFile) => {
     const filePath = path.join(contentPath, `${lessonFile}.txt`);
     if (fs.existsSync(filePath)) {
@@ -80,44 +73,30 @@ const getLessonContent = (lessonFile) => {
 };
 
 
-// --- Funções de Progresso ('progress' Collection) ---
-
-const getUserProgress = async (userFirestoreId) => {
-    const doc = await db.collection('progress').doc(userFirestoreId).get();
-    return doc.exists ? doc.data() : { completedLessons: [] };
-};
-
-const markLessonComplete = async (userFirestoreId, lessonId) => {
-    const docRef = db.collection('progress').doc(userFirestoreId);
-    await docRef.set({
-        completedLessons: admin.firestore.FieldValue.arrayUnion(lessonId)
-    }, { merge: true });
-};
-
-
-// --- Funções de Comentários/Feedback ('comments' Collection) ---
-
-const getComments = async () => {
-    const snapshot = await db.collection('comments').orderBy('createdAt', 'desc').get();
+// --- Funções de Comentários ('comments' Collection) ---
+const getComments = async (lessonId = null) => {
+    let query = db.collection('comments').orderBy('timestamp', 'desc');
+    if (lessonId) {
+        query = query.where('lessonId', '==', parseInt(lessonId));
+    }
+    const snapshot = await query.get();
     return mapSnapshotToData(snapshot);
 };
 
 const saveNewComment = async (commentData) => {
-    await db.collection('comments').add({
-        ...commentData,
-        createdAt: new Date().toISOString(),
-        status: 'pending' // Novo comentário é sempre 'pending'
-    });
+    commentData.timestamp = new Date().toISOString();
+    await db.collection('comments').add(commentData);
 };
 
-const saveReplyToComment = async (commentFirestoreId, adminResponse, adminUsername) => {
+const saveReplyToComment = async (commentFirestoreId, adminResponse, adminName) => {
     const docRef = db.collection('comments').doc(commentFirestoreId);
     await docRef.update({
         adminResponse: adminResponse,
-        respondedAt: new Date().toISOString(),
-        respondedBy: adminUsername,
-        status: 'responded'
+        adminName: adminName,
+        status: 'responded', 
+        respondedAt: new Date().toISOString()
     });
+    return true; 
 };
 
 // 💡 NOVA FUNÇÃO: Apagar um único Comentário/Feedback
@@ -145,7 +124,6 @@ const deleteAllComments = async () => {
 
 
 // --- Funções de Mensagens Globais ('messages' Collection) ---
-
 const getMessages = async () => {
     const snapshot = await db.collection('messages').orderBy('createdAt', 'desc').get();
     return mapSnapshotToData(snapshot);
@@ -181,8 +159,23 @@ const deleteAllMessages = async () => {
     return snapshot.size; 
 };
 
+// --- Funções de Progresso e Submissões ---
+const getUserProgress = async (userId) => {
+    const doc = await db.collection('progress').doc(userId.toString()).get();
+    if (doc.exists) {
+        return doc.data().completedLessons || [];
+    }
+    return [];
+};
 
-// --- Funções de Logs de Quiz ---
+const markLessonComplete = async (userId, lessonId) => {
+    const lessonIdInt = parseInt(lessonId);
+    const docRef = db.collection('progress').doc(userId.toString());
+    await docRef.set({
+        completedLessons: admin.firestore.FieldValue.arrayUnion(lessonIdInt)
+    }, { merge: true }); 
+    return true; 
+};
 
 const getSubmissionLogs = async () => {
     const snapshot = await db.collection('quiz_submissions').orderBy('timestamp', 'desc').get();
@@ -202,19 +195,20 @@ const logQuizSubmission = async (userId, username, lessonId, score, totalQuestio
     await db.collection('quiz_submissions').add(submissionData);
 };
 
+
 // --- EXPORTAÇÕES GLOBAIS (FINAL) ---
 module.exports = {
     // Usuários
     getUsers, addNewUser, approveUser, 
-    updateUser, deleteUser, 
+    updateUser, deleteUser,
     // Lições
     getLessons, saveLessons, getLessonContent,
     // Comentários/Feedback
     getComments, saveNewComment, saveReplyToComment,
-    deleteComment, deleteAllComments, // 💡 NOVAS EXPORTAÇÕES
+    deleteComment, deleteAllComments, 
     // Mensagens Globais
     getMessages, saveNewMessage, deleteMessage,
-    deleteAllMessages, // 💡 NOVA EXPORTAÇÃO
+    deleteAllMessages, 
     // Progresso
     getUserProgress, markLessonComplete, getSubmissionLogs, logQuizSubmission 
 };

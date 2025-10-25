@@ -1,43 +1,60 @@
+// ===========================================
+// views/admin/dashboard.ejs (CÓDIGO COMPLETO E FINAL)
+// ===========================================
+
 <% layout = "layout" %>
 <div class="container">
-     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
         <h2>Painel Administrativo</h2>
         <p>Logado como: <b><%= user.username %></b> (<a href="/auth/logout">Sair</a>)</p>
     </div>
+
+    <% if (errorMessage) { %>
+        <div style="margin-bottom: 30px; padding: 15px; background: #ffcdd2; border: 1px solid #e57373; border-radius: 4px; color: #c62828; font-weight: bold;">
+            ❌ Erro: <%= decodeURIComponent(errorMessage) %>
+        </div>
+    <% } %>
+
+    <% if (successMessage) { %>
+        <div style="margin-bottom: 30px; padding: 15px; background: #c8e6c9; border: 1px solid #81c784; border-radius: 4px; color: #2e7d32; font-weight: bold;">
+            ✅ Sucesso: <%= decodeURIComponent(successMessage) %>
+        </div>
+    <% } %>
 
     <div style="margin-bottom: 30px; padding: 15px; background: #e0f7fa; border: 1px solid #b2ebf2; border-radius: 4px;">
         ✅ **Gerenciar Usuários e Aprovações:** <a href="/admin/users" style="font-weight: bold; color: #00838f;">Ver Lista Completa de Usuários</a>
     </div>
 
-    <div style="margin-bottom: 30px; padding: 15px; 
-background: #fff3e0; border: 1px solid #ffcc80; border-radius: 4px;">
+    <div style="margin-bottom: 30px; padding: 15px; background: #fff3e0; border: 1px solid #ffcc80; border-radius: 4px;">
         💬 **Gerenciar Feedback e Comentários:** <a href="/admin/feedback" style="font-weight: bold; color: #ef6c00;">Responder Comentários Pendentes</a>
     </div>
+    
     <div style="margin-bottom: 30px; padding: 15px; background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 4px;">
-  📢 <b>Mensagens Globais:</b>
-  <a href="/admin/messages" style="font-weight: bold;
-color: #2e7d32;">Enviar/Ver Mensagens</a>
-</div>
+        📢 <b>Mensagens Globais:</b>
+        <a href="/admin/messages" style="font-weight: bold; color: #2e7d32;">Enviar/Ver Mensagens</a>
+    </div>
     
     <div style="margin-bottom: 30px; padding: 15px; background: #ffebee; border: 1px solid #ffcdd2; border-radius: 4px;">
         📊 **Resultados do Quiz:** <a href="/admin/quiz-submissions" style="font-weight: bold; color: #c62828;">Ver Submissões dos Alunos</a>
     </div>
-    <div style="background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-margin-bottom: 30px;">
+    
+    <div style="background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 30px;">
         <h3>Adicionar Nova Aula</h3>
-        <form action="/admin/lessons" method="POST" enctype="multipart/form-data">
+        <form action="/admin/lessons" method="POST" enctype="multipart/form-data"> 
+            
             <label for="title">Título:</label>
             <input type="text" id="title" name="title" required>
 
             <label for="description">Descrição:</label>
             <textarea id="description" name="description" rows="3"></textarea>
-	    <label for="module">Módulo:</label>
-	    <select id="module" name="module" required>
- 		 <option value="Módulo 1">Módulo 1</option>
- 		 <option value="Módulo 
- 2">Módulo 2</option>
- 		 <option value="Módulo 3">Módulo 3</option>
-	    </select>
+
+            <label for="module">Módulo:</label>
+            <select id="module" name="module" required>
+                <option value="Módulo 1">Módulo 1</option>
+                <option value="Módulo 2">Módulo 2</option>
+                <option value="Módulo 3">Módulo 3</option>
+            </select>
+
             <label for="content_file">Arquivo da Aula (.txt):</label>
             <input type="file" id="content_file" name="content_file" accept=".txt" required><br>
 
@@ -54,28 +71,32 @@ margin-bottom: 30px;">
 
     <h3>Aulas Existentes</h3>
     <% if (lessons.length > 0) { %>
-        <table style="width: 100%;
-border-collapse: collapse; margin-top: 15px; background: #fff;">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; background: #fff;">
             <thead>
                 <tr style="background-color: #ecf0f1;">
-                    <th style="padding: 10px;
-text-align: left;">Título</th>
-                    <th style="padding: 10px;
-text-align: left;">Módulo</th>
-                    <th style="padding: 10px;
-text-align: left;">Arquivo TXT</th>
+                    <th style="padding: 10px; text-align: left;">Título</th>
+                    <th style="padding: 10px; text-align: left;">Módulo</th>
+                    <th style="padding: 10px; text-align: left;">Arquivo TXT</th>
+                    <th style="padding: 10px; text-align: left;">Ações</th>
                 </tr>
             </thead>
             <tbody>
                 <% lessons.forEach(lesson => { %>
                     <tr style="border-bottom: 1px solid #eee;">
-              
-           <td style="padding: 10px;"><%= lesson.title %></td>
+                        <td style="padding: 10px;"><%= lesson.title %></td>
                         <td style="padding: 10px;"><%= lesson.module %></td>
-                        <td style="padding: 10px;"><code><%= lesson.content_file %>.txt</code></td>
+                        <td style="padding: 10px;">
+                             <a href="/admin/lessons/<%= lesson.id %>">
+                                <code><%= lesson.content_file %>.txt</code>
+                             </a>
+                        </td>
+                         <td style="padding: 10px;">
+                            <form action="/admin/lessons/<%= lesson.id %>/delete" method="POST" onsubmit="return confirm('Tem certeza que deseja apagar a aula: <%= lesson.title %>?');">
+                                <button type="submit" style="background: #e57373; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Apagar</button>
+                            </form>
+                        </td>
                     </tr>
-          
-       <% }) %>
+                <% }) %>
             </tbody>
         </table>
     <% } else { %>
