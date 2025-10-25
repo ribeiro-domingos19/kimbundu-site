@@ -1,5 +1,6 @@
 // ===========================================
-// routes/admin.js (CÓDIGO COMPLETO E MODIFICADO PARA FIREBASE)
+// routes/admin.js (CÓDIGO COMPLETO E CORRIGIDO)
+// Inclui o tratamento de erro na Rota de Aulas e as Rotas de Exclusão
 // ===========================================
 
 const express = require('express');
@@ -12,8 +13,8 @@ const multer = require('multer');
 const {
     getUsers, approveUser, deleteUser, updateUser, // Gerenciamento de Usuários
     getLessons, saveLessons, getLessonContent, 
-    getComments, saveReplyToComment, 
-    getMessages, saveNewMessage, deleteMessage,
+    getComments, saveReplyToComment, deleteComment, deleteAllComments, // 💡 NOVAS FUNÇÕES PARA COMENTÁRIOS/FEEDBACK
+    getMessages, saveNewMessage, deleteMessage, deleteAllMessages, // 💡 NOVAS FUNÇÕES PARA MENSAGENS
     getSubmissionLogs
 } = require('../database');
 
@@ -53,30 +54,42 @@ router.get('/', (req, res) => {
 
 // Rota 2: Adiciona uma nova aula (com upload do .txt) - SÍNCRONA
 router.post('/lessons', upload.single('content_file'), (req, res) => {
-    const lessons = getLessons();
-    const newId = lessons.length > 0 ? Math.max(...lessons.map(l => l.id)) + 1 : 1; 
+    try {
+        // 💡 VERIFICAÇÃO CRÍTICA: Checa se o arquivo foi realmente carregado (Causa provável do erro 500)
+        if (!req.file) {
+            return res.status(400).send("Erro: O arquivo de conteúdo (.txt) da aula é obrigatório.");
+        }
 
-    const newLesson = {
-        id: newId,
-        title: req.body.title,
-        content_file: req.file.filename.replace('.txt', ''),
-        quiz: req.body.quiz === 'on' 
-    };
+        const lessons = getLessons();
+        const newId = lessons.length > 0 ? Math.max(...lessons.map(l => l.id)) + 1 : 1; 
 
-    if (newLesson.quiz) {
-        // Lógica de quiz (simples, ajuste se necessário)
-        newLesson.questions = {
-            q1: {
-                text: req.body.q1_text,
-                options: [req.body.q1_optA, req.body.q1_optB, req.body.q1_optC],
-                answer: parseInt(req.body.q1_answer) // 0, 1 ou 2
-            }
+        const newLesson = {
+            id: newId,
+            title: req.body.title,
+            content_file: req.file.filename.replace('.txt', ''),
+            quiz: req.body.quiz === 'on' 
         };
-    }
 
-    lessons.push(newLesson);
-    saveLessons(lessons); // Síncrona
-    res.redirect('/admin');
+        if (newLesson.quiz) {
+            // Lógica de quiz (simples, ajuste se necessário)
+            newLesson.questions = {
+                q1: {
+                    text: req.body.q1_text,
+                    options: [req.body.q1_optA, req.body.q1_optB, req.body.q1_optC],
+                    answer: parseInt(req.body.q1_answer) // 0, 1 ou 2
+                }
+            };
+        }
+
+        lessons.push(newLesson);
+        saveLessons(lessons);
+        res.redirect('/admin');
+
+    } catch (e) {
+        console.error("Erro ao adicionar nova aula:", e);
+        // Trata o erro e informa o usuário
+        res.status(500).send("Erro interno ao tentar adicionar a aula. Verifique se o arquivo .txt foi anexado e se o servidor tem permissão de escrita.");
+    }
 });
 
 // Rota 3: Excluir uma aula (Exclui do JSON e o arquivo .txt) - SÍNCRONA
@@ -181,19 +194,16 @@ router.post('/users/:id/delete', async (req, res) => {
 // --- Rotas de Gerenciamento de Feedback (MIGRADAS PARA ASYNC/AWAIT) ---
 
 // Lista todo o feedback
-// ROTA CORRIGIDA: Lista todo o feedback
 router.get('/feedback', async (req, res) => { // 💡 ASYNC
     try {
         const comments = await getComments(); // 💡 AWAIT (Retorna todos os comentários do Firebase)
         
         // Filtra e inverte a ordem para mostrar os mais recentes primeiro
-        // (A lógica de inversão pode ser ajustada se o Firebase já fizer a ordenação)
         const pendingComments = comments.filter(c => c.status === 'pending').reverse();
         const respondedComments = comments.filter(c => c.status === 'responded').reverse();
 
         res.render('admin/feedback', {
             title: 'Gerenciamento de Feedback',
-            // 💡 VARIÁVEIS ENVIADAS PARA A VIEW EJS:
             pendingComments,
             respondedComments,
             user: req.user
@@ -224,25 +234,31 @@ router.post('/feedback/reply/:id', async (req, res) => { // 💡 ASYNC
     }
 });
 
-// Rota para Responder ao Feedback
-router.post('/feedback/reply/:id', async (req, res) => { // 💡 ASYNC
-    const commentFirestoreId = req.params.id; // ID do documento no Firebase
-    const { adminResponse } = req.body;
+// 💡 NOVO: Rota para Excluir um único Comentário/Feedback
+router.post('/feedback/:id/delete', async (req, res) => {
+    const commentFirestoreId = req.params.id;
     
-    if (!adminResponse) {
-        return res.status(400).send('A resposta do administrador é obrigatória.');
-    }
-
     try {
-        // 💡 CORREÇÃO: Chama a função assíncrona
-        await saveReplyToComment(commentFirestoreId, adminResponse);
-        
-        return res.redirect('/admin/feedback');
-    } catch (e) {
-        console.error("Erro ao responder feedback no Firebase:", e);
-        res.status(500).send('Erro ao salvar resposta no Firebase.');
+        await deleteComment(commentFirestoreId);
+        res.redirect('/admin/feedback?success=Feedback%20excluído%20com%20sucesso.');
+    } catch (error) {
+        console.error("Erro ao excluir feedback:", error);
+        res.status(500).send("Erro interno ao excluir feedback.");
     }
 });
+
+// 💡 NOVO: Rota para Excluir TODOS os Comentários/Feedback
+router.post('/feedback/delete-all', async (req, res) => {
+    try {
+        const count = await deleteAllComments();
+        const message = `Todos os ${count} itens de feedback/comentários foram eliminados com sucesso.`;
+        res.redirect(`/admin/feedback?success=${encodeURIComponent(message)}`);
+    } catch (error) {
+        console.error("Erro ao excluir todo o feedback:", error);
+        res.status(500).send("Erro interno ao excluir todo o feedback.");
+    }
+});
+
 
 // --- Rotas de Mensagens Globais (MIGRADAS PARA ASYNC/AWAIT) ---
 
@@ -276,7 +292,7 @@ router.post('/messages', async (req, res) => { // 💡 ASYNC
     }
 });
 
-// Excluir mensagem
+// Excluir mensagem individual
 router.post('/messages/:id/delete', async (req, res) => { // 💡 ASYNC
     const messageFirestoreId = req.params.id;
     
@@ -286,6 +302,18 @@ router.post('/messages/:id/delete', async (req, res) => { // 💡 ASYNC
     } catch (error) {
         console.error("Erro ao excluir mensagem:", error);
         res.status(500).send("Erro interno ao excluir mensagem.");
+    }
+});
+
+// 💡 NOVO: Rota para Excluir TODAS as mensagens globais
+router.post('/messages/delete-all', async (req, res) => {
+    try {
+        const count = await deleteAllMessages();
+        const message = `Todas as ${count} mensagens globais foram eliminadas com sucesso.`;
+        res.redirect(`/admin/messages?success=${encodeURIComponent(message)}`);
+    } catch (error) {
+        console.error("Erro ao excluir todas as mensagens:", error);
+        res.status(500).send("Erro interno ao excluir todas as mensagens.");
     }
 });
 

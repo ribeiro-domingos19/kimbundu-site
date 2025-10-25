@@ -181,17 +181,61 @@ const logQuizSubmission = async (userId, username, lessonId, score, totalQuestio
     await db.collection('quiz_submissions').add(submissionData);
 };
 
-// --- EXPORTAÇÕES GLOBAIS ---
+// 💡 NOVA FUNÇÃO: Apagar todas as Mensagens Globais ('messages' collection)
+const deleteAllMessages = async () => {
+    const messagesRef = db.collection('messages');
+    const snapshot = await messagesRef.get();
+    const batch = db.batch();
+
+    if (snapshot.empty) {
+        return 0;
+    }
+
+    snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+    return snapshot.size; 
+};
+
+// 💡 NOVA FUNÇÃO: Apagar um único Comentário/Feedback ('comments' collection)
+const deleteComment = async (commentFirestoreId) => {
+    await db.collection('comments').doc(commentFirestoreId).delete();
+};
+
+// 💡 NOVA FUNÇÃO: Apagar todos os Comentários/Feedback ('comments' collection)
+const deleteAllComments = async () => {
+    const commentsRef = db.collection('comments');
+    const snapshot = await commentsRef.get();
+    const batch = db.batch();
+
+    if (snapshot.empty) {
+        return 0;
+    }
+
+    snapshot.docs.forEach((doc) => {
+        batch.delete(doc.ref);
+    });
+
+    await batch.commit();
+    return snapshot.size;
+};
+
+
+// --- EXPORTAÇÕES GLOBAIS (ATUALIZADAS) ---
 module.exports = {
     // Usuários
     getUsers, addNewUser, approveUser, 
-    updateUser, deleteUser, // 💡 NOVAS FUNÇÕES EXPORTADAS
+    updateUser, deleteUser,
     // Lições
     getLessons, saveLessons, getLessonContent,
     // Comentários/Feedback
     getComments, saveNewComment, saveReplyToComment,
+    deleteComment, deleteAllComments, // 💡 NOVAS EXPORTAÇÕES
     // Mensagens Globais
     getMessages, saveNewMessage, deleteMessage,
+    deleteAllMessages, // 💡 NOVA EXPORTAÇÃO
     // Progresso
     getUserProgress, markLessonComplete, getSubmissionLogs, logQuizSubmission 
 };
