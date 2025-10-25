@@ -1,24 +1,169 @@
-# Saudações Iniciais em Kimbundu
+# Saudações em Kimbundu
 
-## Vídeo da Aula
+A saudação em língua *Kimbundu* utiliza o verbo pelo qual se exerce a ação de saudar. Para a saudação matinal, aplica-se o verbo **Kuzeka** (*Dormir*, em português).
 
-[vimeo:946939921] 
-(Substitua o número acima pelo ID do seu vídeo do Vimeo)
+## Saudação Matinal (Singular)
 
-## O Essencial para Começar
+Veja as variações de perguntas e respostas:
 
-Esta é a primeira aula do seu curso. Vamos aprender as saudações mais básicas para que você possa iniciar uma conversa.
+> **Kimbundu:**
+P: *Wazekele kyebi?*
+R: *Ngazekele kyambote!*
 
-- Moni (Olá)
-- Sabala (Bom Dia)
-- Xikola (Boa Tarde)
+> **Português:**
+P: *Dormiste como?*
+R: *Dormi bem!*
 
-[img:mapa_angola.png]
+> **Kimbundu:**
+P: *Wazekele kyebi?* (Pergunta sobre o dia anterior, dependendo do contexto)
+R: *ngazekele kyambote*
 
-## Pronúncia Correta
+> **Português:**
+P: *Dormiu como?*
+R: *Dormi bem!*
 
-Ouça a pronúncia da palavra "Olá":
-[audio:moni.mp3]
+## Saudação Matinal (Coletivo/Plural)
 
-A prática diária é fundamental para memorizar estas expressões.
+> **Kimbundu:**
+P: *Mwazekele kyebi?*
+R: *Twazekele kyambote!*
+
+> **Português:**
+P: *Dormiram como?* (Vós/vocês)
+R: *Dormimos bem!*
+
+> **Kimbundu:**
+P: *Azekele kyebi?*
+R:*Azekele kyambote!*
+
+> **Português:**
+P: *Dormiram como?* (Eles/Elas)
+R:*Dormiram bem!*
+
+## Expressões de Saudação Especiais
+
+A expressão abaixo é de utilidade especial, seja para um indivíduo, tanto para um colectivo.
+
+> **Kimbundu:**
+*Ngakumenekena*
+*Ngamumenekena*
+
+> **Português:**
+*Saudo-lhe/Saudo-te* (Individual)
+*Saudo-vos* (Coletivo)
+
+[NOTE] Esta espécie de saudação pode ser utilizada tanto no **período matinal**, quanto no período que vai do **meio dia ao pôr do sol**.
+
+A parte acima representa o valor ou número gramatical do sujeito:
+
+* **Ku** – *representa individualidade*
+* **Mu** – *representa colectividade*
+
+## Saudação Após-Meio-Dia (Verbo Kunanga)
+
+O dia encontra-se subdividido em *manhã*, *tarde* e *noite*. Para a saudação no período que vai do **meio dia ao pôr-do-sol**, utiliza-se o verbo **Kunanga** (*Tardar*, em português).
+
+Lembre-se que as pessoas a saudar são: *tu* e *vós*, dependendo da realidade, saber *ele* e *eles*.
+
+### Singular
+
+> **Kimbundu:**
+P: *Wanange kyebi?*
+R: *Nga nange kyambote*
+
+> **Português:**
+P: *Como passaste o dia?*
+R: *Passei bem*
+
+### Coletivo (Plural)
+
+> **Kimbundu:**
+P: *Mwanange kyebhi?*
+R: *Twanange kyambote.*
+
+> **Português:**
+P: *Como (vós/vocês) passastes o dia?*
+R: *Passamos bem*
+
+> **Kimbundu:**
+P:*Anange kyebi?*
+R:*Anange kyambote.*
+
+> **Português:**
+P: *Como (eles/elas) passaram o dia?*
+R: *Passaram bem*
+
+## Saudação no Período da Noite
+
+Quando saudamos alguém à noite, pretendemos saber a disposição do indivíduo e como passou o tempo até aquele momento.
+
+> **Kimbundu:**
+*Ngoloxyenu* (Ngoloxi yenu)
+> **Português:**
+*Boa noite à todos*
+
+[NOTE] Esta expressão equivale a uma saudação dirigida a uma **coletividade**.
+
+## Boas Vindas
+
+As Boas Vindas são dirigidas a um indivíduo ou uma coletividade que acabam de chegar, ou com quem se cruza pelo caminho.
+
+### Individual
+
+> **Kimbundu:**
+*kala kala ku dibhata dyê!* Ou *Twa mu menekena*
+
+> **Português:**
+*Seja bem-vindo(a).*
+
+### Coletiva (Plural)
+
+> **Kimbundu:**
+*Kalenu kala ku dibhata dienu* (kala + enu)
+
+> **Português:**
+*Sejam bem-vindos(as)*
+
+## Despedidas (Verbo Kuxala)
+
+Utilizamos o verbo **Kuxala** (*Ficar* em Português) para as despedidas.
+
+### Individual
+
+> **Kimbundu:**
+*Xala kyambote*
+> **Português:**
+*Fica bem*
+
+### Coletiva (Plural)
+
+> **Kimbundu:**
+*Xalenu kyambote*
+> **Português:**
+*Fiquem bem*
+
+---
+
+> **Kimbundu:**
+*Mungu*
+> **Português:**
+*Amanhã* (singular)
+
+> **Kimbundu:**
+*Mungwenu* (Mungu + enu)
+> **Português:**
+*Amanhã* (plural)
+
+---
+
+[NOTE] Para responder a todas as perguntas com *"e você?"*, diz-se:
+
+* **Abha eye?** Ou **Eye Wé?**
+* **E você?**
+
+***
+
+*Katé bhaba twa zubhu kya o disá dyetu kya dyanga kya lelu, saki saki!*
+
+Até aqui terminamos a nossa primeira aula de hoje, muito obrigado!
 
