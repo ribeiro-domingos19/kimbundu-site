@@ -1,7 +1,3 @@
-// ===========================================
-// views/admin/dashboard.ejs (CÓDIGO COMPLETO E FINAL)
-// ===========================================
-
 <% layout = "layout" %>
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
@@ -68,39 +64,45 @@
             O arquivo TXT será enviado automaticamente para a pasta <code>content/</code>.
         </small>
     </div>
+    <small style="display: block; margin-top: 10px; color: #777;">
+        O arquivo TXT será enviado automaticamente para o **Firebase Storage**.
+    </small>
+</div>
 
-    <h3>Aulas Existentes</h3>
-    <% if (lessons.length > 0) { %>
-        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; background: #fff;">
-            <thead>
-                <tr style="background-color: #ecf0f1;">
-                    <th style="padding: 10px; text-align: left;">Título</th>
-                    <th style="padding: 10px; text-align: left;">Módulo</th>
-                    <th style="padding: 10px; text-align: left;">Arquivo TXT</th>
-                    <th style="padding: 10px; text-align: left;">Ações</th>
+<h3>Aulas Existentes</h3>
+<% if (lessons.length > 0) { %>
+    <table style="width: 100%; border-collapse: collapse; margin-top: 15px; background: #fff;">
+        <thead>
+            <tr style="background-color: #ecf0f1;">
+                <th style="padding: 10px; text-align: left;">Título</th>
+                <th style="padding: 10px; text-align: left;">Módulo</th>
+                <th style="padding: 10px; text-align: left;">Arquivo Storage</th>
+                <th style="padding: 10px; text-align: left;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% lessons.forEach(lesson => { %>
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 10px;"><%= lesson.title %></td>
+                    <td style="padding: 10px;"><%= lesson.module %></td>
+                    <td style="padding: 10px;">
+                         <a href="/admin/lessons/<%= lesson.id %>">
+                            <code><%= lesson.content_file %>.txt</code>
+                         </a>
+                    </td>
+                     <td style="padding: 10px;">
+                        <form action="/admin/lessons/<%= lesson.id %>/delete" method="POST" onsubmit="return confirm('Tem certeza que deseja apagar a aula: <%= lesson.title %>?');">
+                            <input type="hidden" name="firestoreId" value="<%= lesson.id %>">
+                            <input type="hidden" name="fileName" value="<%= lesson.content_file %>">
+                            <button type="submit" style="background: #e57373; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Apagar</button>
+                        </form>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                <% lessons.forEach(lesson => { %>
-                    <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 10px;"><%= lesson.title %></td>
-                        <td style="padding: 10px;"><%= lesson.module %></td>
-                        <td style="padding: 10px;">
-                             <a href="/admin/lessons/<%= lesson.id %>">
-                                <code><%= lesson.content_file %>.txt</code>
-                             </a>
-                        </td>
-                         <td style="padding: 10px;">
-                            <form action="/admin/lessons/<%= lesson.id %>/delete" method="POST" onsubmit="return confirm('Tem certeza que deseja apagar a aula: <%= lesson.title %>?');">
-                                <button type="submit" style="background: #e57373; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Apagar</button>
-                            </form>
-                        </td>
-                    </tr>
-                <% }) %>
-            </tbody>
-        </table>
-    <% } else { %>
-        <p>Nenhuma aula cadastrada ainda.</p>
-    <% } %>
+            <% }) %>
+        </tbody>
+    </table>
+<% } else { %>
+    <p>Nenhuma aula cadastrada ainda.</p>
+<% } %>
 </div>
 

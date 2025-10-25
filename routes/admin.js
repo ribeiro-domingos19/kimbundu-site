@@ -1,6 +1,5 @@
 // ===========================================
-// routes/admin.js (CÓDIGO COMPLETO E FINAL)
-// Inclui todas as Rotas e o 'module.exports' no final.
+// routes/admin.js (CÓDIGO COMPLETO E CORRIGIDO PARA VERSEL/FIREBASE)
 // ===========================================
 
 const express = require('express');
@@ -9,39 +8,22 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 
-// 💡 Importa TODAS as funções ASSÍNCRONAS do Firebase, incluindo as novas de exclusão
+// 💡 Importa as novas funções assíncronas
 const {
-    getUsers, approveUser, deleteUser, updateUser, 
-    getLessons, saveLessons, getLessonContent, 
-    getComments, saveReplyToComment, deleteComment, deleteAllComments, // Funções de Comentários
-    getMessages, saveNewMessage, deleteMessage, deleteAllMessages, // Funções de Mensagens
+    getUsers, approveUser, deleteUser, 
+    getLessons, saveNewLesson, deleteLesson, uploadLessonContent, getLessonContent, 
+    getComments, saveReplyToComment, deleteComment, deleteAllComments, 
+    getMessages, deleteMessage, deleteAllMessages,
     getSubmissionLogs
 } = require('../database');
 
 const { requireAdmin } = require('./auth');
 const { parseLessonContent } = require('../utils/parser');
 
-// Configuração do Multer (Armazenamento em Disco)
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const contentDir = path.join(__dirname, '..', 'content');
-        if (!fs.existsSync(contentDir)) {
-             try {
-                fs.mkdirSync(contentDir);
-            } catch(e) {
-                // Em ambientes como Vercel, isso irá falhar e o erro será capturado abaixo.
-                console.warn("Não foi possível criar o diretório de conteúdo localmente. Verifique permissões.");
-            }
-        }
-        cb(null, contentDir);
-    },
-    filename: (req, file, cb) => {
-        const cleanName = file.originalname
-            .toLowerCase()
-            .replace(/\s+/g, '_');
-        cb(null, cleanName);
-    }
-});
+
+// 💡 MUDANÇA CRÍTICA: Configuração do Multer para MEMORY STORAGE (Obrigatório no Vercel)
+// O arquivo é armazenado em um Buffer na RAM, e o Node envia para o Firebase Storage
+const storage = multer.memoryStorage();
 
 // Configuração de Multer (limites e filtro)
 const upload = multer({ 
@@ -51,6 +33,7 @@ const upload = multer({
         if (file.mimetype === 'text/plain') {
             cb(null, true);
         } else {
+            // Retorna um erro que será pego no uploadMiddleware
             cb(new Error('O arquivo deve ser do tipo .txt.'), false);
         }
     }
@@ -58,6 +41,7 @@ const upload = multer({
 
 // Middleware que encapsula e trata os erros de upload
 const uploadMiddleware = (req, res, next) => {
+    // Usa .single('content_file')
     upload.single('content_file')(req, res, (err) => {
         if (err) {
             console.error("Erro no Upload Multer:", err.message);
@@ -72,42 +56,64 @@ const uploadMiddleware = (req, res, next) => {
 // Aplica o middleware requireAdmin a todas as rotas do painel
 router.use(requireAdmin);
 
-// --- Rotas de Gerenciamento de Aulas ---
+// --- Rotas de Gerenciamento de Aulas (ASYNC/AWAIT) ---
 
-// Rota 1: Dashboard principal - AGORA MOSTRA MENSAGENS DE SUCESSO/ERRO
-router.get('/', (req, res) => {
-    const lessons = getLessons(); 
-    res.render('admin/dashboard', {
-        lessons,
-        title: 'Painel Admin',
-        user: req.user,
-        successMessage: req.query.success || null,
-        errorMessage: req.query.error || null
-    });
+// Rota 1: Dashboard principal - AGORA ASYNC
+router.get('/', async (req, res) => {
+    try {
+        const lessons = await getLessons(); // 💡 AGORA É ASSÍNCRONA (Firestore)
+        res.render('admin/dashboard', {
+            lessons,
+            title: 'Painel Admin',
+            user: req.user,
+            successMessage: req.query.success || null,
+            errorMessage: req.query.error || null
+        });
+    } catch (e) {
+        console.error("Erro ao carregar lista de aulas do Firestore:", e);
+        // Exibe um erro genérico em caso de falha de conexão/permissão do Firebase
+        res.redirect(`/admin?error=${encodeURIComponent("Erro ao carregar aulas. Verifique a conexão com o Firebase.")}`);
+    }
 });
 
-// Rota 2: Adiciona uma nova aula (com upload do .txt)
-router.post('/lessons', uploadMiddleware, (req, res) => {
+// Rota 2: Adiciona uma nova aula (com upload para Storage) - AGORA ASYNC
+router.post('/lessons', uploadMiddleware, async (req, res) => {
+    // Verifica se o Multer processou o arquivo
+    if (!req.file || !req.file.buffer) {
+        return res.redirect(`/admin?error=${encodeURIComponent("Erro: Arquivo não foi processado ou está vazio.")}`);
+    }
+
     try {
-        if (!req.file) {
-            return res.redirect(`/admin?error=${encodeURIComponent("Erro: Arquivo não foi processado pelo servidor.")}`);
-        }
+        // 1. Gera nome limpo e remove a extensão
+        const rawFileName = req.file.originalname;
+        const cleanFileName = rawFileName
+            .toLowerCase()
+            .replace(/\s+/g, '_')
+            .replace(/\.txt$/, ''); 
 
-        const lessons = getLessons();
-        const newId = lessons.length > 0 ? Math.max(...lessons.map(l => l.id)) + 1 : 1; 
+        // O conteúdo é o Buffer de memória do Multer
+        const contentBuffer = req.file.buffer;
+        
+        // 2. Upload para o Firebase Storage
+        const uploadedFileName = await uploadLessonContent(`${cleanFileName}.txt`, contentBuffer);
+        
+        // 3. Obtém o ID sequencial correto para a nova aula
+        const currentLessons = await getLessons();
+        const newId = currentLessons.length > 0 ? Math.max(...currentLessons.map(l => l.id || 0)) + 1 : 1; 
 
+        // 4. Salva metadados no Firestore
         const newLesson = {
-            id: newId,
+            id: newId, // ID sequencial para o frontend/progresso
             title: req.body.title,
             description: req.body.description || '',
             module: req.body.module || 'Módulo 1',
             release_date: req.body.release_date || new Date().toISOString().split('T')[0],
-            content_file: req.file.filename.replace('.txt', ''),
+            content_file: cleanFileName, // Nome do arquivo no Storage (sem .txt)
             quiz: req.body.quiz === 'on' 
         };
 
         if (newLesson.quiz) {
-            // Lógica de quiz
+            // Lógica de quiz (adaptar se for mais complexa)
             newLesson.questions = {
                 q1: {
                     text: req.body.q1_text,
@@ -117,54 +123,50 @@ router.post('/lessons', uploadMiddleware, (req, res) => {
             };
         }
 
-        lessons.push(newLesson);
-        saveLessons(lessons); // Síncrona (PONTO DE FALHA DE PERMISSÃO)
-        res.redirect('/admin?success=Aula%20adicionada%20com%20sucesso.');
+        await saveNewLesson(newLesson); // 💡 Salva no Firestore
+
+        res.redirect('/admin?success=Aula%20adicionada%20e%20arquivo%20enviado%20para%20o%20Firebase%20Storage%20com%20sucesso.');
 
     } catch (e) {
-        // Captura falhas de escrita local (lessons.json)
-        console.error("Erro fatal ao processar nova aula (falha de escrita local):", e);
-        if (req.file && fs.existsSync(req.file.path)) {
-             fs.unlinkSync(req.file.path);
-        }
-        res.redirect(`/admin?error=${encodeURIComponent("Falha grave: O servidor não conseguiu salvar os dados. (Erro de Permissão ou I/O)")}`);
+        console.error("Erro fatal ao processar nova aula:", e);
+        res.redirect(`/admin?error=${encodeURIComponent("Falha ao salvar a aula. Verifique as permissões de Escrita do Firebase Storage e Firestore.")}`);
     }
 });
 
-// Rota 3: Excluir uma aula (Exclui do JSON e o arquivo .txt)
-router.post('/lessons/:id/delete', (req, res) => {
-    const id = parseInt(req.params.id);
-    let lessons = getLessons();
-    const lessonToDelete = lessons.find(l => l.id === id);
-
+// Rota 3: Excluir uma aula (Exclui do Firestore e Storage) - AGORA ASYNC
+router.post('/lessons/:id/delete', async (req, res) => {
+    // Os dados chegam via body (campos hidden do EJS)
+    const lessonFirestoreId = req.body.firestoreId; 
+    const fileName = req.body.fileName;
+    
     try {
-        if (lessonToDelete) {
-            const filePath = path.join(__dirname, '..', 'content', `${lessonToDelete.content_file}.txt`);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
-            lessons = lessons.filter(l => l.id !== id);
-            saveLessons(lessons); 
+        if (lessonFirestoreId && fileName) {
+            await deleteLesson(lessonFirestoreId, fileName); // 💡 Exclui do Firestore e Storage
+            res.redirect('/admin?success=Aula%20eliminada%20com%20sucesso.');
+        } else {
+            res.redirect(`/admin?error=${encodeURIComponent("Erro: ID do Firestore ou nome do arquivo ausente na requisição.")}`);
         }
-        res.redirect('/admin?success=Aula%20eliminada%20com%20sucesso.');
     } catch (e) {
         console.error("Erro ao excluir aula:", e);
-        res.redirect(`/admin?error=${encodeURIComponent("Erro ao excluir a aula. (Permissão de escrita)")}`);
+        res.redirect(`/admin?error=${encodeURIComponent("Erro ao excluir a aula. Verifique as permissões de Storage/Firestore.")}`);
     }
 });
 
-// Rota 4: Visualização de Conteúdo (para Admin)
-router.get('/lessons/:id', (req, res) => {
+
+// Rota 4: Visualização de Conteúdo (para Admin) - AGORA ASYNC
+router.get('/lessons/:id', async (req, res) => {
     try {
-        const lessonId = req.params.id;
-        const lessons = getLessons();
-        const lesson = lessons.find(l => l.id.toString() === lessonId.toString());
+        const lessonFirestoreId = req.params.id;
+        const lessons = await getLessons(); // 💡 AGORA É ASSÍNCRONA
+        
+        // Busca a lição usando o ID do Firestore (que é o campo 'id' no objeto retornado)
+        const lesson = lessons.find(l => l.id.toString() === lessonFirestoreId.toString());
         
         if (!lesson) {
             return res.status(404).send('Aula não encontrada.');
         }
 
-        const rawContent = getLessonContent(lesson.content_file); // Usa o nome do arquivo para ler
+        const rawContent = await getLessonContent(lesson.content_file); // 💡 AGORA É ASSÍNCRONA (Storage)
         const lessonHtml = parseLessonContent(rawContent);
 
         res.render('admin/lesson_content', {
@@ -175,190 +177,158 @@ router.get('/lessons/:id', (req, res) => {
         });
     } catch (e) {
         console.error("Erro ao carregar conteúdo da aula para admin:", e);
-        res.status(500).send("Erro interno ao carregar o conteúdo da aula.");
+        res.status(500).send("Erro interno ao carregar o conteúdo da aula. (Verifique o Storage)");
     }
 });
 
+// --- Rotas de Gerenciamento de Usuários (Mantidas, assumindo já estão ASYNC) ---
 
-// --- Rotas de Gerenciamento de Usuários (ASYNC/AWAIT) ---
-
-// Lista todos os usuários
 router.get('/users', async (req, res) => {
     try {
         const users = await getUsers();
-        const pendingUsers = users.filter(u => !u.approved);
-        const approvedUsers = users.filter(u => u.approved);
-
+        // Filtra para mostrar apenas estudantes não aprovados e, se quiser, todos os outros
+        const usersToApprove = users.filter(u => u.role === 'student' && !u.approved);
+        const approvedUsers = users.filter(u => u.approved || u.role !== 'student');
+        
         res.render('admin/users', {
-            title: 'Gerenciamento de Usuários',
-            pendingUsers,
+            usersToApprove,
             approvedUsers,
+            title: 'Gerenciar Usuários',
             user: req.user,
-            successMessage: req.query.success
+            successMessage: req.query.success || null,
+            errorMessage: req.query.error || null
         });
-    } catch (error) {
-        console.error("Erro ao carregar usuários:", error);
-        res.status(500).send("Erro interno ao carregar a lista de usuários.");
+    } catch (e) {
+        res.status(500).send("Erro interno ao carregar usuários.");
     }
 });
 
-// ROTA: Aprovar usuário pendente
 router.post('/users/:id/approve', async (req, res) => {
-    const userFirestoreId = req.params.id;
     try {
-        await approveUser(userFirestoreId);
-        res.redirect('/admin/users?success=Usuário aprovado com sucesso.');
-    } catch (error) {
-        console.error("Erro ao aprovar usuário:", error);
-        res.status(500).send("Erro interno ao tentar aprovar o usuário.");
+        await approveUser(req.params.id);
+        res.redirect('/admin/users?success=Usuário%20aprovado%20com%20sucesso.');
+    } catch (e) {
+        res.status(500).send("Erro ao aprovar usuário.");
     }
 });
 
-// ROTA: Eliminar usuário
-router.post('/users/:id/delete', async (req, res) => { 
-    const userFirestoreId = req.params.id; 
+router.post('/users/:id/delete', async (req, res) => {
     try {
-        await deleteUser(userFirestoreId); 
-        res.redirect('/admin/users?success=Usuário eliminado com sucesso.');
-    } catch (error) {
-        console.error("Erro ao eliminar usuário:", error);
-        res.status(500).send("Erro interno ao tentar eliminar o usuário.");
+        // Assume que o body contém o userId numérico (se usado em 'progress')
+        const userId = req.body.userId; 
+        await deleteUser(req.params.id, userId); 
+        res.redirect('/admin/users?success=Usuário%20eliminado%20com%20sucesso.');
+    } catch (e) {
+        res.status(500).send("Erro ao eliminar usuário.");
     }
 });
 
+// --- Rotas de Feedback (Comentários) ---
 
-// --- Rotas de Gerenciamento de Feedback/Comentários (ASYNC/AWAIT) ---
-
-// Lista todo o feedback
 router.get('/feedback', async (req, res) => {
     try {
         const comments = await getComments(); 
-        const pendingComments = comments.filter(c => c.status === 'pending').reverse();
-        const respondedComments = comments.filter(c => c.status === 'responded').reverse();
+        const pendingComments = comments.filter(c => c.status !== 'responded');
+        const lessons = await getLessons(); 
+        
+        const pendingWithLessonInfo = pendingComments.map(c => {
+            const lesson = lessons.find(l => l.id.toString() === c.lessonId.toString());
+            return {
+                ...c,
+                lessonTitle: lesson ? lesson.title : `Aula ID ${c.lessonId} (Não Encontrada)`
+            };
+        });
 
         res.render('admin/feedback', {
-            title: 'Gerenciamento de Feedback',
-            pendingComments,
-            respondedComments,
+            pendingComments: pendingWithLessonInfo,
+            lessons,
+            title: 'Gerenciar Feedback',
             user: req.user,
-            successMessage: req.query.success
+            successMessage: req.query.success || null,
+            errorMessage: req.query.error || null
         });
-    } catch (error) {
-        console.error("Erro ao carregar feedback:", error);
-        res.status(500).send("Erro interno ao carregar o feedback.");
-    }
-});
-
-// ROTA DE POST PARA RESPOSTA
-router.post('/feedback/reply/:id', async (req, res) => {
-    const commentFirestoreId = req.params.id;
-    const { adminResponse } = req.body;
-    
-    if (!adminResponse) {
-        return res.status(400).send('A resposta do administrador é obrigatória.');
-    }
-
-    try {
-        await saveReplyToComment(commentFirestoreId, adminResponse, req.user.username);
-        return res.redirect('/admin/feedback');
     } catch (e) {
-        console.error("Erro ao responder feedback no Firebase:", e);
-        res.status(500).send('Erro ao salvar resposta no Firebase.');
+        res.status(500).send("Erro interno ao carregar feedback.");
     }
 });
 
-// ROTA NOVA: Excluir um único Comentário/Feedback
-router.post('/feedback/:id/delete', async (req, res) => {
-    const commentFirestoreId = req.params.id;
+router.post('/feedback/:id/reply', async (req, res) => {
     try {
-        await deleteComment(commentFirestoreId);
-        res.redirect('/admin/feedback?success=Feedback%20excluído%20com%20sucesso.');
-    } catch (error) {
-        console.error("Erro ao excluir feedback:", error);
-        res.status(500).send("Erro interno ao excluir feedback.");
+        const { admin_response } = req.body;
+        const adminName = req.user.username; 
+        await saveReplyToComment(req.params.id, admin_response, adminName);
+        res.redirect('/admin/feedback?success=Resposta%20salva%20com%20sucesso.');
+    } catch (e) {
+        res.status(500).send("Erro ao salvar resposta.");
     }
 });
 
-// ROTA NOVA: Excluir TODOS os Comentários/Feedback
+router.post('/feedback/:id/delete', async (req, res) => {
+    try {
+        await deleteComment(req.params.id);
+        res.redirect('/admin/feedback?success=Comentário%20eliminado%20com%20sucesso.');
+    } catch (e) {
+        res.status(500).send("Erro ao eliminar comentário.");
+    }
+});
+
 router.post('/feedback/delete-all', async (req, res) => {
     try {
         const count = await deleteAllComments();
-        const message = `Todos os ${count} itens de feedback/comentários foram eliminados com sucesso.`;
+        const message = `Todos os ${count} comentários foram eliminados com sucesso.`;
         res.redirect(`/admin/feedback?success=${encodeURIComponent(message)}`);
     } catch (error) {
-        console.error("Erro ao excluir todo o feedback:", error);
-        res.status(500).send("Erro interno ao excluir todo o feedback.");
+        res.status(500).send("Erro ao excluir todos os comentários.");
     }
 });
 
+// --- Rotas de Mensagens Globais ---
 
-// --- Rotas de Mensagens Globais (ASYNC/AWAIT) ---
-
-// Lista mensagens existentes e mostra formulário
 router.get('/messages', async (req, res) => {
     try {
-        const messages = await getMessages();
+        const messages = await getMessages(); 
         res.render('admin/messages', {
-            title: 'Mensagens Globais',
             messages,
+            title: 'Gerenciar Mensagens Globais',
             user: req.user,
-            successMessage: req.query.success
+            successMessage: req.query.success || null,
+            errorMessage: req.query.error || null
         });
-    } catch (error) {
-        console.error("Erro ao carregar mensagens:", error);
+    } catch (e) {
         res.status(500).send("Erro interno ao carregar mensagens.");
     }
 });
 
-// Adicionar nova mensagem
-router.post('/messages', async (req, res) => {
-    if (!req.body.text) {
-        return res.status(400).send('O texto da mensagem é obrigatório.');
-    }
-    try {
-        await saveNewMessage(req.body.text);
-        res.redirect('/admin/messages?success=Mensagem%20publicada%20com%20sucesso.');
-    } catch (error) {
-        console.error("Erro ao salvar mensagem:", error);
-        res.status(500).send("Erro interno ao salvar mensagem.");
-    }
-});
-
-// Excluir mensagem individual
 router.post('/messages/:id/delete', async (req, res) => {
-    const messageFirestoreId = req.params.id;
     try {
-        await deleteMessage(messageFirestoreId);
-        res.redirect('/admin/messages?success=Mensagem%20excluída%20com%20sucesso.');
+        await deleteMessage(req.params.id);
+        res.redirect('/admin/messages?success=Mensagem%20eliminada%20com%20sucesso.');
     } catch (error) {
-        console.error("Erro ao excluir mensagem:", error);
-        res.status(500).send("Erro interno ao excluir mensagem.");
+        res.status(500).send("Erro ao excluir mensagem.");
     }
 });
 
-// ROTA NOVA: Excluir TODAS as mensagens globais
 router.post('/messages/delete-all', async (req, res) => {
     try {
         const count = await deleteAllMessages();
         const message = `Todas as ${count} mensagens globais foram eliminadas com sucesso.`;
         res.redirect(`/admin/messages?success=${encodeURIComponent(message)}`);
     } catch (error) {
-        console.error("Erro ao excluir todas as mensagens:", error);
-        res.status(500).send("Erro interno ao excluir todas as mensagens.");
+        res.status(500).send("Erro ao excluir todas as mensagens.");
     }
 });
 
 
-// --- Rotas de Logs de Quiz (ASYNC/AWAIT) ---
+// --- Rotas de Logs de Quiz ---
 
-// Lista logs de submissão dos quizzes
-router.get('/quiz-submissions', async (req, res) => {
+router.get('/quiz-submissions', async (req, res) => { 
     try {
-        const submissionLogs = await getSubmissionLogs();
-        const lessons = getLessons(); 
+        const submissionLogs = await getSubmissionLogs(); 
+        const lessons = await getLessons(); 
 
         const logsWithLessonInfo = submissionLogs.map(log => {
-            const lesson = lessons.find(l => l.id.toString() === log.lessonId.toString());
+            // Assume que lessonId é o 'id' sequencial interno da aula
+            const lesson = lessons.find(l => l.id.toString() === log.lessonId.toString()); 
             return {
                 ...log,
                 lessonTitle: lesson ? lesson.title : `Aula ID ${log.lessonId} (Não Encontrada)`
@@ -371,10 +341,10 @@ router.get('/quiz-submissions', async (req, res) => {
             user: req.user
         });
     } catch (error) {
-        console.error("Erro ao carregar logs de quiz:", error);
-        res.status(500).send("Erro interno ao carregar logs de quiz.");
+        res.status(500).send("Erro ao carregar logs de quiz.");
     }
 });
+
 
 // 🚨 EXPORTAÇÃO FINAL
 module.exports = { router };
