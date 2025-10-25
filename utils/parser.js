@@ -157,6 +157,13 @@ const parseLessonContent = (rawContent) => {
         if (p.startsWith('## ')) return `<h3 style="margin-top: 1.5em; margin-bottom: 0.8em;">${p.substring(3).trim()}</h3>`;
         if (p.startsWith('# ')) return `<h2 style="margin-top: 2em; margin-bottom: 1em;">${p.substring(2).trim()}</h2>`;
 
+// C. Bloco de Citação (Blockquote)
+if (p.startsWith('>')) {
+    const content = p.substring(1).trim();
+    const style = 'padding: 10px 15px; margin-bottom: 1.2em; border-left: 4px solid #1976D2; background-color: #f5f5f5; border-radius: 0 4px 4px 0;';
+    return `<blockquote style="${style}">${content}</blockquote>`;
+}
+
         // C. Bloco de código multilinha ``` ```
         if (p.startsWith('```') && p.endsWith('```')) {
             const code = p.substring(3, p.length - 3).trim();
